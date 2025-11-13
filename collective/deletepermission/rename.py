@@ -1,21 +1,17 @@
-import sys
-import warnings
 from AccessControl import getSecurityManager
 from AccessControl.Permissions import copy_or_move
 from Acquisition import aq_base
 from Acquisition import aq_inner
 from Acquisition import aq_parent
-from App.Dialogs import MessageDialog
-from html import escape
 from OFS.CopySupport import absattr
 from OFS.CopySupport import CopyError
-from OFS.CopySupport import eNotSupported
 from OFS.event import ObjectWillBeMovedEvent
-from webdav.Lockable import ResourceLockedError
+from zExceptions import ResourceLockedError
 from ZODB.POSException import ConflictError
 from zope.container.contained import notifyContainerModified
 from zope.event import notify
 from zope.lifecycleevent import ObjectMovedEvent
+import warnings
 
 
 def isRenameable(self):
@@ -24,8 +20,10 @@ def isRenameable(self):
         return 0
     if hasattr(self, '_p_jar') and self._p_jar is None:
         return 0
-    try:    n=aq_parent(aq_inner(self))._reserved_names
-    except: n=()
+    try:
+        n = aq_parent(aq_inner(self))._reserved_names
+    except Exception:
+        n = ()
     if absattr(self.id) in n:
         return 0
     if not getSecurityManager().checkPermission(copy_or_move, self):
@@ -41,30 +39,23 @@ def manage_renameObject(self, id, new_id, REQUEST=None):
     """
     try:
         self._checkId(new_id)
-    except:
-        raise CopyError(MessageDialog(
-            title='Invalid Id',
-            message=sys.exc_info()[1],
-            action ='manage_main'))
+    except Exception:
+        raise CopyError('Invalid Id')
 
     ob = self._getOb(id)
 
     if ob.wl_isLocked():
-        raise ResourceLockedError('Object "%s" is locked via WebDAV'
-                                    % ob.getId())
+        raise ResourceLockedError('Object "%s" is locked' % ob.getId())
     if not isRenameable(ob):
-        raise CopyError(eNotSupported % escape(id))
+        raise CopyError('Not Supported')
     self._verifyObjectPaste(ob)
 
     try:
         ob._notifyOfCopyTo(self, op=1)
     except ConflictError:
         raise
-    except:
-        raise CopyError(MessageDialog(
-            title="Rename Error",
-            message=sys.exc_info()[1],
-            action ='manage_main'))
+    except Exception:
+        raise CopyError('Rename Error')
 
     notify(ObjectWillBeMovedEvent(ob, self, id, self, new_id))
 
@@ -95,5 +86,4 @@ def manage_renameObject(self, id, new_id, REQUEST=None):
     ob._postCopy(self, op=1)
 
     if REQUEST is not None:
-        return self.manage_main(self, REQUEST, update_menu=1)
-    return None
+        return self.manage_main(self, REQUEST)

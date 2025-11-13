@@ -3,6 +3,7 @@ from plone.app.testing import FunctionalTesting
 from plone.app.testing import PLONE_FIXTURE
 from plone.app.testing import PloneSandboxLayer
 from plone.app.testing import setRoles, TEST_USER_ID, TEST_USER_NAME, login
+from plone.testing.zope import WSGI_SERVER_FIXTURE
 
 
 class CollectiveDeletepermissionLayer(PloneSandboxLayer):
@@ -26,5 +27,5 @@ class CollectiveDeletepermissionLayer(PloneSandboxLayer):
 
 COLLECTIVE_DELETEPERMISSION_FIXTURE = CollectiveDeletepermissionLayer()
 COLLECTIVE_DELETEPERMISSION_FUNCTIONAL_TESTING = FunctionalTesting(
-    bases=(COLLECTIVE_DELETEPERMISSION_FIXTURE,),
+    bases=(COLLECTIVE_DELETEPERMISSION_FIXTURE, WSGI_SERVER_FIXTURE),
     name="CollectiveDeletepermission:Functional")
