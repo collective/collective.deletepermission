@@ -1,23 +1,25 @@
-from collective.deletepermission.tests.base import duplicate_with_dexterity
 from collective.deletepermission.tests.base import FunctionalTestCase
-from ftw.builder import Builder
-from ftw.builder import create
 from ftw.testbrowser import browsing
 import transaction
 
 
-@duplicate_with_dexterity
 class TestDeleteAction(FunctionalTestCase):
 
     def setUp(self):
-        self.hugo = create(Builder('user').named('Hugo', 'Boss')
-                           .with_roles('Member', 'Contributor'))
-        self.john = create(Builder('user').named('John', 'Doe')
-                           .with_roles('Member', 'Contributor'))
+        self.hugo = self.create_user(
+            userid='hugo',
+            fullname='Hugo Boss',
+            roles=['Member', 'Contributor']
+        )
+        self.john = self.create_user(
+            userid='john',
+            fullname='John Doe',
+            roles=['Member', 'Contributor']
+        )
         with self.user(self.hugo):
-            self.container = create(self.folder_builder())
+            self.container = self.create_folder()
         with self.user(self.john):
-            self.content = create(self.folder_builder().within(self.container))
+            self.content = self.create_folder(container=self.container)
 
     @browsing
     def test_user_can_delete_own_contents(self, browser):
@@ -36,18 +38,23 @@ class TestDeleteAction(FunctionalTestCase):
                          ' without "Delete objects" on the parent.')
 
 
-@duplicate_with_dexterity
 class TestCutAction(FunctionalTestCase):
 
     def setUp(self):
-        self.hugo = create(Builder('user').named('Hugo', 'Boss')
-                           .with_roles('Member', 'Contributor'))
-        self.john = create(Builder('user').named('John', 'Doe')
-                           .with_roles('Member', 'Contributor'))
+        self.hugo = self.create_user(
+            userid='hugo',
+            fullname='Hugo Boss',
+            roles=['Member', 'Contributor']
+        )
+        self.john = self.create_user(
+            userid='john',
+            fullname='John Doe',
+            roles=['Member', 'Contributor']
+        )
         with self.user(self.hugo):
-            self.container = create(self.folder_builder())
+            self.container = self.create_folder()
         with self.user(self.john):
-            self.content = create(self.folder_builder().within(self.container))
+            self.content = self.create_folder(container=self.container)
 
     @browsing
     def test_user_can_cut_own_contents(self, browser):

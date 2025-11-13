@@ -1,35 +1,33 @@
-from collective.deletepermission.testing import IS_PLONE_5_OR_GREATER
-from collective.deletepermission.tests.base import duplicate_with_dexterity
 from collective.deletepermission.tests.base import FunctionalTestCase
-from ftw.builder import Builder
-from ftw.builder import create
 from ftw.testbrowser import browsing
-from ftw.testbrowser.pages import folder_contents
-from ftw.testbrowser.pages import plone
 from ftw.testbrowser.pages import statusmessages
-from unittest import skipIf
 
 
-@duplicate_with_dexterity
 class TestCorrectPermissions(FunctionalTestCase):
 
     def setUp(self):
-        self.user_a = create(Builder('user').with_userid('usera'))
-        self.user_b = create(Builder('user').with_userid('userb'))
+        self.user_a = self.create_user(userid='usera')
+        self.user_b = self.create_user(userid='userb')
 
-        self.folder = create(self.folder_builder().titled(u'rootfolder'))
+        self.folder = self.create_folder(title='rootfolder')
         self.set_local_roles(self.folder, self.user_a, 'Contributor')
         self.set_local_roles(self.folder, self.user_b, 'Contributor')
 
         with self.user(self.user_a):
-            self.folder_a = create(self.folder_builder().within(self.folder)
-                                   .titled(u'folder-a'))
-            self.doc_a = create(self.folder_builder().within(self.folder_a)
-                                .titled(u'doc-a'))
+            self.folder_a = self.create_folder(
+                container=self.folder,
+                title='folder-a'
+            )
+            self.doc_a = self.create_folder(
+                container=self.folder_a,
+                title='doc-a'
+            )
 
         with self.user(self.user_b):
-            self.doc_b = create(self.folder_builder().within(self.folder_a)
-                                .titled(u'doc-b'))
+            self.doc_b = self.create_folder(
+                container=self.folder_a,
+                title='doc-b'
+            )
 
     @browsing
     def test_userb_delete_docb(self, browser):
@@ -54,11 +52,7 @@ class TestCorrectPermissions(FunctionalTestCase):
         """
         browser.login(self.user_b).open(self.doc_b)
         browser.find('Rename').click()
-        if IS_PLONE_5_OR_GREATER:
-            browser.fill({'New Short Name': 'doc-b-renamed'}).find('Rename').click()
-        else:
-            browser.fill({'new_ids:list': 'doc-b-renamed'}
-                         ).find('Rename All').click()
+        browser.fill({'New Short Name': 'doc-b-renamed'}).find('Rename').click()
         statusmessages.assert_no_error_messages()
         self.assertEqual(self.folder_a.absolute_url() + '/doc-b-renamed',
                           browser.url)
@@ -87,11 +81,7 @@ class TestCorrectPermissions(FunctionalTestCase):
         """
         browser.login(self.user_a).open(self.folder_a)
         browser.find('Rename').click()
-        if IS_PLONE_5_OR_GREATER:
-            browser.fill({'New Short Name': 'folder-a-renamed'}).find('Rename').click()
-        else:
-            browser.fill({'new_ids:list': 'folder-a-renamed'}
-                         ).find('Rename All').click()
+        browser.fill({'New Short Name': 'folder-a-renamed'}).find('Rename').click()
         statusmessages.assert_no_error_messages()
         self.assertEqual(self.folder.absolute_url() + '/folder-a-renamed',
                           browser.url)
@@ -113,13 +103,8 @@ class TestCorrectPermissions(FunctionalTestCase):
         """
         browser.login(self.user_b).open(self.folder_a)
         self.assertNotIn('Cut', self.get_actions())
-        if IS_PLONE_5_OR_GREATER:
-            with browser.expect_unauthorized():
-                browser.open(self.folder_a, view='object_cut')
-        else:
+        with browser.expect_unauthorized():
             browser.open(self.folder_a, view='object_cut')
-            self.assertEqual(['folder-a is not moveable.'],
-                              statusmessages.error_messages())
 
     @browsing
     def test_userb_rename_folder(self, browser):
@@ -154,11 +139,7 @@ class TestCorrectPermissions(FunctionalTestCase):
         """
         browser.login(self.user_a).open(self.doc_a)
         browser.find('Rename').click()
-        if IS_PLONE_5_OR_GREATER:
-            browser.fill({'New Short Name': 'doc-a-renamed'}).find('Rename').click()
-        else:
-            browser.fill({'new_ids:list': 'doc-a-renamed',
-                          }).find('Rename All').click()
+        browser.fill({'New Short Name': 'doc-a-renamed'}).find('Rename').click()
         statusmessages.assert_no_error_messages()
         self.assertEqual(self.folder_a.absolute_url() + '/doc-a-renamed',
                           browser.url)
@@ -186,11 +167,7 @@ class TestCorrectPermissions(FunctionalTestCase):
         """
         browser.login(self.user_a).open(self.doc_b)
         browser.find('Rename').click()
-        if IS_PLONE_5_OR_GREATER:
-            browser.fill({'New Short Name': 'doc-b-renamed'}).find('Rename').click()
-        else:
-            browser.fill({'new_ids:list': 'doc-b-renamed',
-                          }).find('Rename All').click()
+        browser.fill({'New Short Name': 'doc-b-renamed'}).find('Rename').click()
         statusmessages.assert_no_error_messages()
         self.assertEqual(self.folder_a.absolute_url() + '/doc-b-renamed',
                           browser.url)
@@ -211,13 +188,8 @@ class TestCorrectPermissions(FunctionalTestCase):
         """
         browser.login(self.user_b).open(self.doc_a)
         self.assertNotIn('Cut', self.get_actions())
-        if IS_PLONE_5_OR_GREATER:
-            with browser.expect_unauthorized():
-                browser.open(self.doc_a, view='object_cut')
-        else:
+        with browser.expect_unauthorized():
             browser.open(self.doc_a, view='object_cut')
-            self.assertEqual(['doc-a is not moveable.'],
-                              statusmessages.error_messages())
 
     @browsing
     def test_userb_rename_doc_a(self, browser):
@@ -229,79 +201,3 @@ class TestCorrectPermissions(FunctionalTestCase):
         with browser.expect_unauthorized():
             browser.open(self.folder_a, view='object_rename')
 
-    @skipIf(IS_PLONE_5_OR_GREATER, '@@folder_contents in Plone 5 is JS-only and our testbrowser cannot handle JS.')
-    @browsing
-    def test_usera_remove_docs_folder_contents(self, browser):
-        """Check if we are able to remove files over folder_contents."""
-        browser.login(self.user_a).open(self.folder_a, view='folder_contents')
-        folder_contents.select(self.doc_a, self.doc_b)
-        folder_contents.form().find('Delete').click()
-        self.assertEqual(['Item(s) deleted.'], statusmessages.info_messages())
-
-    @skipIf(IS_PLONE_5_OR_GREATER, '@@folder_contents in Plone 5 is JS-only and our testbrowser cannot handle JS.')
-    @browsing
-    def test_usera_cuts_docs_folder_contents(self, browser):
-        """Check if we are able to cut docs over folder_contents."""
-        browser.login(self.user_a).open(self.folder_a, view='folder_contents')
-        folder_contents.select(self.doc_a, self.doc_b)
-        folder_contents.form().find('Cut').click()
-        self.assertEqual({'info': ['2 item(s) cut.'],
-                          'warning': [],
-                          'error': []}, statusmessages.messages())
-
-    @skipIf(IS_PLONE_5_OR_GREATER, '@@folder_contents in Plone 5 is JS-only and our testbrowser cannot handle JS.')
-    @browsing
-    def test_usera_renames_docs_folder_contents(self, browser):
-        """Check if we are able to rename docs over folder_contents."""
-        browser.login(self.user_a).open(self.folder_a, view='folder_contents')
-        folder_contents.select(self.doc_a, self.doc_b)
-        folder_contents.form().find('Rename').click()
-        self.assertEqual('folder_rename_form', plone.view())
-        self.assertEqual('doc-a', browser.css('#doc-a_id').first.value)
-        self.assertEqual('doc-b', browser.css('#doc-b_id').first.value)
-
-    @skipIf(IS_PLONE_5_OR_GREATER, '@@folder_contents in Plone 5 is JS-only and our testbrowser cannot handle JS.')
-    @browsing
-    def test_userb_remove_docs_folder_contents(self, browser):
-        """Check if the permission also works when we delete over
-        folder_contents.
-        """
-        browser.login(self.user_b).open(self.folder_a, view='folder_contents')
-        folder_contents.select(self.doc_a, self.doc_b)
-        folder_contents.form().find('Delete').click()
-        self.assertEqual(
-            {'info': ['/plone/rootfolder/folder-a/doc-a'
-                      ' could not be deleted.'],
-             'warning': [],
-             'error': []}, statusmessages.messages())
-
-    @skipIf(IS_PLONE_5_OR_GREATER, '@@folder_contents in Plone 5 is JS-only and our testbrowser cannot handle JS.')
-    @browsing
-    def test_userb_cuts_docs_folder_contents(self, browser):
-        """Check if the permission also works when we cut over
-        folder_contents.
-        """
-        browser.login(self.user_b).open(self.folder_a, view='folder_contents')
-        folder_contents.select(self.doc_a, self.doc_b)
-        folder_contents.form().find('Cut').click()
-        self.assertEqual({'info': [],
-                          'warning': [],
-                          'error': ['One or more items not moveable.']},
-                         statusmessages.messages())
-
-    @skipIf(IS_PLONE_5_OR_GREATER, '@@folder_contents in Plone 5 is JS-only and our testbrowser cannot handle JS.')
-    @browsing
-    def test_userb_renames_docs_folder_contents(self, browser):
-        """Check if the permission also works when we rename over
-        folder_contents.
-        """
-        browser.login(self.user_b).open(self.folder_a, view='folder_contents')
-        folder_contents.select(self.doc_a, self.doc_b)
-        folder_contents.form().find('Rename').click()
-        self.assertEqual('folder_rename_form', plone.view())
-        self.assertEqual(
-            ['You are not allowed to modify the id of this item.',
-             'You are not allowed to modify the title of this item.'],
-            browser.css('#content fieldset .error span').text)
-        self.assertFalse(browser.css('#doc-a_id'))
-        self.assertEqual('doc-b', browser.css('#doc-b_id').first.value)

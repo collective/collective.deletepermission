@@ -2,25 +2,25 @@ from AccessControl.SecurityManagement import getSecurityManager
 from AccessControl.SecurityManagement import setSecurityManager
 from collective.deletepermission import testing
 from contextlib import contextmanager
-from ftw.builder import Builder
 from ftw.testbrowser.pages import editbar
+from plone import api
 from plone.app.testing import login
 from unittest import TestCase
-import sys
 import transaction
 
 
 class FunctionalTestCase(TestCase):
 
     layer = testing.COLLECTIVE_DELETEPERMISSION_FUNCTIONAL_TESTING
-    folder_name = 'Folder'
 
     def revoke_permission(self, permission, on):
         on.manage_permission(permission, roles=[], acquire=False)
         transaction.commit()
 
     def set_local_roles(self, context, user, *roles):
-        if hasattr(user, 'getUserName'):
+        if hasattr(user, 'id'):
+            user = user.id
+        elif hasattr(user, 'getUserName'):
             user = user.getUserName()
 
         context.manage_setLocalRoles(user, tuple(roles))
@@ -32,7 +32,9 @@ class FunctionalTestCase(TestCase):
 
     @contextmanager
     def user(self, username):
-        if hasattr(username, 'getUserName'):
+        if hasattr(username, 'id'):
+            username = username.id
+        elif hasattr(username, 'getUserName'):
             username = username.getUserName()
 
         sm = getSecurityManager()
@@ -42,33 +44,38 @@ class FunctionalTestCase(TestCase):
         finally:
             setSecurityManager(sm)
 
-    def folder_builder(self):
-        return Builder('folder')
+    def create_user(self, userid=None, email=None, username=None, fullname=None, roles=None):
+        """Helper to create a user."""
+        if userid is None:
+            userid = 'testuser'
+        if email is None:
+            email = f'{userid}@example.com'
 
-    def is_dexterity_test(self):
-        return False
+        user = api.user.create(
+            email=email,
+            username=userid,
+            properties={
+                'fullname': fullname or userid,
+            }
+        )
 
+        if roles:
+            api.user.grant_roles(username=userid, roles=list(roles))
 
-def duplicate_with_dexterity(klass):
-    """Decorator for duplicating a test suite to be ran against dexterity contents.
-    """
+        transaction.commit()
+        return user
 
-    if testing.IS_PLONE_5_OR_GREATER:
-         # The default types (Folder etc.) in Plone 5 are already Dexterity.
-         # So we do not test Archetypes under Plone 5 anymore, thus we do not
-         # need to duplicate the tests.
-         return klass
+    def create_folder(self, container=None, title=None, id=None):
+        """Helper to create a folder."""
+        if container is None:
+            container = self.layer['portal']
 
-    class DexterityTestSuite(klass):
-        folder_name = 'dxfolder'
-
-        def folder_builder(self):
-            return Builder('dxfolder')
-
-        def is_dexterity_test(self):
-            return True
-
-    DexterityTestSuite.__name__ = klass.__name__ + 'Dexterity'
-    DexterityTestSuite.__module__ = klass.__module__
-    sys._getframe(1).f_locals[DexterityTestSuite.__name__] = DexterityTestSuite
-    return klass
+        folder = api.content.create(
+            container=container,
+            type='Folder',
+            title=title or 'Test Folder',
+            id=id,
+            safe_id=True if id is None else False,
+        )
+        transaction.commit()
+        return folder

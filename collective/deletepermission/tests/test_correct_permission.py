@@ -1,30 +1,32 @@
 from AccessControl import Unauthorized
-from collective.deletepermission.tests.base import duplicate_with_dexterity
 from collective.deletepermission.tests.base import FunctionalTestCase
-from ftw.builder import Builder
-from ftw.builder import create
 
 
-@duplicate_with_dexterity
 class TestCorrectPermissions(FunctionalTestCase):
 
     def setUp(self):
-        self.user_a = create(Builder('user').with_userid('usera'))
-        self.user_b = create(Builder('user').with_userid('userb'))
+        self.user_a = self.create_user(userid='usera')
+        self.user_b = self.create_user(userid='userb')
 
-        self.folder = create(self.folder_builder().titled(u'rootfolder'))
+        self.folder = self.create_folder(title='rootfolder')
         self.set_local_roles(self.folder, self.user_a, 'Contributor')
         self.set_local_roles(self.folder, self.user_b, 'Contributor')
 
         with self.user(self.user_a):
-            self.folder_a = create(self.folder_builder().within(self.folder)
-                                   .titled(u'folder-a'))
-            self.doc_a = create(self.folder_builder().within(self.folder_a)
-                                .titled(u'doc-a'))
+            self.folder_a = self.create_folder(
+                container=self.folder,
+                title='folder-a'
+            )
+            self.doc_a = self.create_folder(
+                container=self.folder_a,
+                title='doc-a'
+            )
 
         with self.user(self.user_b):
-            self.doc_b = create(self.folder_builder().within(self.folder_a)
-                                .titled(u'doc-b'))
+            self.doc_b = self.create_folder(
+                container=self.folder_a,
+                title='doc-b'
+            )
 
     def test_usera_remove_folder(self):
         """Test if usera can remove his folder"""

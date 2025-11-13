@@ -1,29 +1,29 @@
-from collective.deletepermission.tests.base import duplicate_with_dexterity
 from collective.deletepermission.tests.base import FunctionalTestCase
-from ftw.builder import Builder
-from ftw.builder import create
 from ftw.testbrowser import browsing
 
 
-@duplicate_with_dexterity
 class TestOnlyFiles(FunctionalTestCase):
 
     def setUp(self):
-        self.user_a = create(Builder('user').with_userid('usera'))
+        self.user_a = self.create_user(userid='usera')
 
-        self.folder = create(self.folder_builder().titled(u'rootfolder'))
+        self.folder = self.create_folder(title='rootfolder')
         self.set_local_roles(self.folder, self.user_a, 'Contributor')
 
-        self.subfolder = create(self.folder_builder().titled(u'subfolder')
-                                .within(self.folder))
+        self.subfolder = self.create_folder(
+            container=self.folder,
+            title='subfolder'
+        )
 
         with self.user(self.user_a):
-            self.firstleveldoc = create(self.folder_builder()
-                                        .titled(u'doc-firstleveldoc')
-                                        .within(self.folder))
-            self.secondleveldoc = create(self.folder_builder()
-                                         .titled(u'doc-secondleveldoc')
-                                         .within(self.subfolder))
+            self.firstleveldoc = self.create_folder(
+                container=self.folder,
+                title='doc-firstleveldoc'
+            )
+            self.secondleveldoc = self.create_folder(
+                container=self.subfolder,
+                title='doc-secondleveldoc'
+            )
 
     @browsing
     def test_delete_secondlevel(self, browser):
