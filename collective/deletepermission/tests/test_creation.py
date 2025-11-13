@@ -24,6 +24,6 @@ class TestFactoryPatch(FunctionalTestCase):
         browser.fill({'Title': 'Foo'}).save()
         statusmessages.assert_no_error_messages()
         if IS_PLONE_5_OR_GREATER:
-            self.assertEquals('listing_view', plone.view())
+            self.assertEqual('listing_view', plone.view())
         else:
-            self.assertEquals('folder_listing', plone.view())
+            self.assertEqual('folder_listing', plone.view())

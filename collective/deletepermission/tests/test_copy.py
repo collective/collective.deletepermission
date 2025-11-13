@@ -31,9 +31,9 @@ class TestCopy(FunctionalTestCase):
             self.assertEqual(['copied.'], statusmessages.info_messages())
         else:
             if self.is_dexterity_test():
-                self.assertEquals([u'dxfolder copied.'], statusmessages.info_messages())
+                self.assertEqual([u'dxfolder copied.'], statusmessages.info_messages())
             else:
-                self.assertEquals([u'folder copied.'], statusmessages.info_messages())
+                self.assertEqual([u'folder copied.'], statusmessages.info_messages())
 
     @browsing
     def test_copy_denied_without_copy_or_move_permission(self, browser):

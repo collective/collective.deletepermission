@@ -8,7 +8,7 @@ tests_require = [
     'Products.CMFCore',
     'Products.GenericSetup',
     'Products.statusmessages',
-    'Zope2',
+    'Zope',
     'ftw.builder',
     'ftw.testbrowser >= 1.11.1',
     'plone.api >= 1.3.0',
@@ -18,7 +18,6 @@ tests_require = [
     'plone.app.testing',
     'plone.autoform',
     'transaction',
-    'unittest2',
     'zExceptions',
     'zope.interface',
     ]
@@ -30,23 +29,26 @@ extras_require = {
 
 
 long_description = (
-    open('README.rst').read()
+    open('README.rst', encoding='utf-8').read()
     + '\n' +
-    open(os.path.join('docs', 'HISTORY.txt')).read()
+    open(os.path.join('docs', 'HISTORY.txt'), encoding='utf-8').read()
     + '\n')
 
 setup(name='collective.deletepermission',
       version=version,
       description="Implements a new permission 'Delete portal content'",
-      long_description=long_description.decode('utf-8'),
+      long_description=long_description,
 
       # Get more strings from
       # http://pypi.python.org/pypi?%3Aaction=list_classifiers
       classifiers=[
         "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.12",
         'Framework :: Plone',
         'Framework :: Plone :: 4.3',
         'Framework :: Plone :: 5.1',
+        'Framework :: Plone :: 6.0',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Libraries :: Python Modules',
         ],
@@ -65,13 +67,12 @@ setup(name='collective.deletepermission',
       install_requires=[
         'AccessControl',
         'Acquisition',
-        'Products.Archetypes',
         'Products.CMFCore',
         'Products.CMFPlone',
         'Products.GenericSetup',
         'Products.PythonScripts',
-        'ZODB3',
-        'Zope2',
+        'ZODB',
+        'Zope',
         'collective.monkeypatcher',
         'setuptools',
         'zope.container',

@@ -6,7 +6,7 @@ from Acquisition import aq_base
 from Acquisition import aq_inner
 from Acquisition import aq_parent
 from App.Dialogs import MessageDialog
-from cgi import escape
+from html import escape
 from OFS.CopySupport import absattr
 from OFS.CopySupport import CopyError
 from OFS.CopySupport import eNotSupported

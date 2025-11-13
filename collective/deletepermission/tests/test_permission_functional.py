@@ -7,7 +7,7 @@ from ftw.testbrowser import browsing
 from ftw.testbrowser.pages import folder_contents
 from ftw.testbrowser.pages import plone
 from ftw.testbrowser.pages import statusmessages
-from unittest2 import skipIf
+from unittest import skipIf
 
 
 @duplicate_with_dexterity
@@ -60,7 +60,7 @@ class TestCorrectPermissions(FunctionalTestCase):
             browser.fill({'new_ids:list': 'doc-b-renamed'}
                          ).find('Rename All').click()
         statusmessages.assert_no_error_messages()
-        self.assertEquals(self.folder_a.absolute_url() + '/doc-b-renamed',
+        self.assertEqual(self.folder_a.absolute_url() + '/doc-b-renamed',
                           browser.url)
 
     @browsing
@@ -93,7 +93,7 @@ class TestCorrectPermissions(FunctionalTestCase):
             browser.fill({'new_ids:list': 'folder-a-renamed'}
                          ).find('Rename All').click()
         statusmessages.assert_no_error_messages()
-        self.assertEquals(self.folder.absolute_url() + '/folder-a-renamed',
+        self.assertEqual(self.folder.absolute_url() + '/folder-a-renamed',
                           browser.url)
 
     @browsing
@@ -118,7 +118,7 @@ class TestCorrectPermissions(FunctionalTestCase):
                 browser.open(self.folder_a, view='object_cut')
         else:
             browser.open(self.folder_a, view='object_cut')
-            self.assertEquals(['folder-a is not moveable.'],
+            self.assertEqual(['folder-a is not moveable.'],
                               statusmessages.error_messages())
 
     @browsing
@@ -160,7 +160,7 @@ class TestCorrectPermissions(FunctionalTestCase):
             browser.fill({'new_ids:list': 'doc-a-renamed',
                           }).find('Rename All').click()
         statusmessages.assert_no_error_messages()
-        self.assertEquals(self.folder_a.absolute_url() + '/doc-a-renamed',
+        self.assertEqual(self.folder_a.absolute_url() + '/doc-a-renamed',
                           browser.url)
 
     @browsing
@@ -192,7 +192,7 @@ class TestCorrectPermissions(FunctionalTestCase):
             browser.fill({'new_ids:list': 'doc-b-renamed',
                           }).find('Rename All').click()
         statusmessages.assert_no_error_messages()
-        self.assertEquals(self.folder_a.absolute_url() + '/doc-b-renamed',
+        self.assertEqual(self.folder_a.absolute_url() + '/doc-b-renamed',
                           browser.url)
 
     @browsing
@@ -216,7 +216,7 @@ class TestCorrectPermissions(FunctionalTestCase):
                 browser.open(self.doc_a, view='object_cut')
         else:
             browser.open(self.doc_a, view='object_cut')
-            self.assertEquals(['doc-a is not moveable.'],
+            self.assertEqual(['doc-a is not moveable.'],
                               statusmessages.error_messages())
 
     @browsing

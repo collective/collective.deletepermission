@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from ftw.builder import Builder
 from ftw.testbrowser.pages import editbar
 from plone.app.testing import login
-from unittest2 import TestCase
+from unittest import TestCase
 import sys
 import transaction
 

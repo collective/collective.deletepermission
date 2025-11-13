@@ -11,7 +11,7 @@ def protect_del_objects(self, ids=None):
 
     if ids is None:
         ids = []
-    if isinstance(ids, basestring):
+    if isinstance(ids, str):
         ids = [ids]
     for id_ in ids:
         item = self._getOb(id_)
