@@ -1,6 +1,4 @@
 from collective.deletepermission.tests.base import FunctionalTestCase
-from ftw.testbrowser import browsing
-from ftw.testbrowser.pages import statusmessages
 
 
 class TestCorrectPermissions(FunctionalTestCase):
@@ -29,175 +27,174 @@ class TestCorrectPermissions(FunctionalTestCase):
                 title='doc-b'
             )
 
-    @browsing
-    def test_userb_delete_docb(self, browser):
+    def test_userb_delete_docb(self):
         """
         Check if User B is able to delete his own document.
         """
+        browser = self.get_browser()
         browser.login(self.user_b).open(self.doc_b, view='delete_confirmation')
         browser.find('Delete').click()
 
-    @browsing
-    def test_userb_cut_docb(self, browser):
+    def test_userb_cut_docb(self):
         """
         Check if User B is able to cut his own document.
         """
+        browser = self.get_browser()
         browser.login(self.user_b).open(self.doc_b)
         browser.find('Cut').click()
 
-    @browsing
-    def test_userb_rename_docb(self, browser):
+    def test_userb_rename_docb(self):
         """
         Check if User B is able to rename his own document.
         """
+        browser = self.get_browser()
         browser.login(self.user_b).open(self.doc_b)
         browser.find('Rename').click()
         browser.fill({'New Short Name': 'doc-b-renamed'}).find('Rename').click()
-        statusmessages.assert_no_error_messages()
+        browser.assert_no_error_messages()
         self.assertEqual(self.folder_a.absolute_url() + '/doc-b-renamed',
                           browser.url)
 
-    @browsing
-    def test_usera_remove_folder(self, browser):
+    def test_usera_remove_folder(self):
         """
         Test if User A is able to delete his folder
         """
+        browser = self.get_browser()
         browser.login(self.user_a).open(self.folder_a,
                                         view='delete_confirmation')
         browser.find('Delete').click()
 
-    @browsing
-    def test_usera_cut_folder(self, browser):
+    def test_usera_cut_folder(self):
         """
         Test if User A is able to cut his folder
         """
+        browser = self.get_browser()
         browser.login(self.user_a).open(self.folder_a)
         browser.find('Cut').click()
 
-    @browsing
-    def test_usera_rename_folder(self, browser):
+    def test_usera_rename_folder(self):
         """
         Test if User A is able to rename his folder
         """
+        browser = self.get_browser()
         browser.login(self.user_a).open(self.folder_a)
         browser.find('Rename').click()
         browser.fill({'New Short Name': 'folder-a-renamed'}).find('Rename').click()
-        statusmessages.assert_no_error_messages()
+        browser.assert_no_error_messages()
         self.assertEqual(self.folder.absolute_url() + '/folder-a-renamed',
                           browser.url)
 
-    @browsing
-    def test_userb_remove_folder(self, browser):
+    def test_userb_remove_folder(self):
         """
         Check if User B can delete User A's folder. Should not be possible.
         """
+        browser = self.get_browser()
         browser.login(self.user_b).open(self.folder_a,
                                         view='delete_confirmation')
         with browser.expect_unauthorized():
             browser.find("Delete").click()
 
-    @browsing
-    def test_userb_cut_folder(self, browser):
+    def test_userb_cut_folder(self):
         """
         Check if User B can't cut User A's folder.
         """
+        browser = self.get_browser()
         browser.login(self.user_b).open(self.folder_a)
         self.assertNotIn('Cut', self.get_actions())
         with browser.expect_unauthorized():
             browser.open(self.folder_a, view='object_cut')
 
-    @browsing
-    def test_userb_rename_folder(self, browser):
+    def test_userb_rename_folder(self):
         """
         Check if User B can't rename User A's folder.
         """
+        browser = self.get_browser()
         browser.login(self.user_b).open(self.folder_a)
         self.assertNotIn('Rename', self.get_actions())
         with browser.expect_unauthorized():
             browser.open(self.folder_a, view='object_rename')
 
-    @browsing
-    def test_usera_remove_doc_a(self, browser):
+    def test_usera_remove_doc_a(self):
         """
         Test if User A is able to delete his own Document.
         """
+        browser = self.get_browser()
         browser.login(self.user_a).open(self.doc_a, view='delete_confirmation')
         browser.find("Delete").click()
 
-    @browsing
-    def test_usera_cut_doc_a(self, browser):
+    def test_usera_cut_doc_a(self):
         """
         Test if User A is able to cut his own Document.
         """
+        browser = self.get_browser()
         browser.login(self.user_a).open(self.doc_a)
         browser.find('Cut').click()
 
-    @browsing
-    def test_usera_rename_doc_a(self, browser):
+    def test_usera_rename_doc_a(self):
         """
         Test if User A is able to rename his own Document.
         """
+        browser = self.get_browser()
         browser.login(self.user_a).open(self.doc_a)
         browser.find('Rename').click()
         browser.fill({'New Short Name': 'doc-a-renamed'}).find('Rename').click()
-        statusmessages.assert_no_error_messages()
+        browser.assert_no_error_messages()
         self.assertEqual(self.folder_a.absolute_url() + '/doc-a-renamed',
                           browser.url)
 
-    @browsing
-    def test_usera_remove_doc_b(self, browser):
+    def test_usera_remove_doc_b(self):
         """
         Test if User A is able to delete the Document of User B
         """
+        browser = self.get_browser()
         browser.login(self.user_a).open(self.doc_b, view='delete_confirmation')
         browser.find('Delete').click()
 
-    @browsing
-    def test_usera_cut_doc_b(self, browser):
+    def test_usera_cut_doc_b(self):
         """
         Test if User A is able to cut the Document of User B
         """
+        browser = self.get_browser()
         browser.login(self.user_a).open(self.doc_b)
         browser.find('Cut').click()
 
-    @browsing
-    def test_usera_rename_doc_b(self, browser):
+    def test_usera_rename_doc_b(self):
         """
         Test if User A is able to rename the Document of User B
         """
+        browser = self.get_browser()
         browser.login(self.user_a).open(self.doc_b)
         browser.find('Rename').click()
         browser.fill({'New Short Name': 'doc-b-renamed'}).find('Rename').click()
-        statusmessages.assert_no_error_messages()
+        browser.assert_no_error_messages()
         self.assertEqual(self.folder_a.absolute_url() + '/doc-b-renamed',
                           browser.url)
 
-    @browsing
-    def test_userb_remove_doc_a(self, browser):
+    def test_userb_remove_doc_a(self):
         """
         Check if User B can remove User A's Document. Should not be possible.
         """
+        browser = self.get_browser()
         browser.login(self.user_b).open(self.doc_a, view='delete_confirmation')
         with browser.expect_unauthorized():
             browser.find('Delete').click()
 
-    @browsing
-    def test_userb_cut_doc_a(self, browser):
+    def test_userb_cut_doc_a(self):
         """
         Check if User B can't remove User A's Document.
         """
+        browser = self.get_browser()
         browser.login(self.user_b).open(self.doc_a)
         self.assertNotIn('Cut', self.get_actions())
         with browser.expect_unauthorized():
             browser.open(self.doc_a, view='object_cut')
 
-    @browsing
-    def test_userb_rename_doc_a(self, browser):
+    def test_userb_rename_doc_a(self):
         """
         Check if User B can't rename User A's Document.
         """
+        browser = self.get_browser()
         browser.login(self.user_b).open(self.doc_a)
         self.assertNotIn('Rename', self.get_actions())
         with browser.expect_unauthorized():
             browser.open(self.folder_a, view='object_rename')
-

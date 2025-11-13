@@ -1,5 +1,4 @@
 from collective.deletepermission.tests.base import FunctionalTestCase
-from ftw.testbrowser import browsing
 import transaction
 
 
@@ -21,17 +20,16 @@ class TestDeleteAction(FunctionalTestCase):
         with self.user(self.john):
             self.content = self.create_folder(container=self.container)
 
-    @browsing
-    def test_user_can_delete_own_contents(self, browser):
+    def test_user_can_delete_own_contents(self):
+        browser = self.get_browser()
         browser.login(self.john).visit(self.content)
         self.assertIn('Delete', self.get_actions(),
                       'A user should be able to delete his own content.')
 
-    @browsing
-    def test_user_can_not_delete_without_delete_objects_on_parent(self,
-                                                                  browser):
+    def test_user_can_not_delete_without_delete_objects_on_parent(self):
         self.revoke_permission('Delete objects', on=self.container)
         transaction.commit()
+        browser = self.get_browser()
         browser.login(self.john).visit(self.content)
         self.assertNotIn('Delete', self.get_actions(),
                          'A user should not be able to delete content'
@@ -56,16 +54,16 @@ class TestCutAction(FunctionalTestCase):
         with self.user(self.john):
             self.content = self.create_folder(container=self.container)
 
-    @browsing
-    def test_user_can_cut_own_contents(self, browser):
+    def test_user_can_cut_own_contents(self):
+        browser = self.get_browser()
         browser.login(self.john).visit(self.content)
         self.assertIn('Cut', self.get_actions(),
                       'A user should be able to cut his own content.')
 
-    @browsing
-    def test_user_can_not_cut_without_delete_objects_on_parent(self, browser):
+    def test_user_can_not_cut_without_delete_objects_on_parent(self):
         self.revoke_permission('Delete objects', on=self.container)
         transaction.commit()
+        browser = self.get_browser()
         browser.login(self.john).visit(self.content)
         self.assertNotIn('Cut', self.get_actions(),
                          'A user should not be able to cut content'
