@@ -40,7 +40,7 @@ CONSTRAINTS_IN=constraints.txt
 CONSTRAINTS_MXDEV=constraints-mxdev.txt
 PIP_REQUIREMENTS_IN_FILE=requirements_barebone.txt
 ADDONBASE=./
-ADDONFOLDER=${ADDONBASE}src/
+ADDONFOLDER=${ADDONBASE}
 INSTANCE_YAML=instance.yaml
 INSTANCE_FOLDER=instance
 

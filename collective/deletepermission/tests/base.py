@@ -76,11 +76,16 @@ class TestBrowser:
             response = self.session.get(url, headers=headers)
             self._last_response = response
 
-            # Check if we got unauthorized
-            if response.status_code == 401:
+            # Check if we got unauthorized or forbidden
+            if response.status_code in [401, 403]:
                 raise Unauthorized("Unauthorized access")
 
             self._last_html = response.text
+
+            # Also check if the response contains an unauthorized error message
+            # Plone sometimes returns 200 with error message in the page
+            if 'Insufficient Privileges' in self._last_html or 'Unauthorized' in self._last_html:
+                raise Unauthorized("Unauthorized access")
 
             # Parse HTML with BeautifulSoup
             if self._last_html:
@@ -181,13 +186,35 @@ class TestBrowser:
 
                     if text_lower in ['cut', 'copy']:
                         # These are typically links, not form submissions
-                        # Navigate to the action URL
+                        # Make GET request to the action URL
                         if text_lower == 'cut':
                             action_url = f"{self.obj.absolute_url()}/object_cut"
                         else:  # copy
                             action_url = f"{self.obj.absolute_url()}/object_copy"
 
-                        self.browser.open(self.obj.aq_parent)
+                        try:
+                            headers = {}
+                            if self.browser._current_user:
+                                import base64
+                                auth_string = f"{self.browser._current_user}:{self.browser._current_user}".encode('utf-8')
+                                auth_header = base64.b64encode(auth_string).decode('ascii')
+                                headers['Authorization'] = f'Basic {auth_header}'
+
+                            response = self.browser.session.get(action_url, headers=headers, allow_redirects=True)
+
+                            # Check for unauthorized or forbidden
+                            if response.status_code in [401, 403]:
+                                raise Unauthorized("Unauthorized access")
+
+                            # Also check if the response contains an unauthorized error message
+                            if 'Insufficient Privileges' in response.text or 'Unauthorized' in response.text:
+                                raise Unauthorized("Unauthorized access")
+
+                            # Update browser to show parent after action
+                            self.browser.open(self.obj.aq_parent)
+                        except requests.RequestException:
+                            pass
+
                         return self.browser
                     elif text_lower == 'rename':
                         # Navigate to rename form if no form data yet
@@ -197,6 +224,8 @@ class TestBrowser:
 
                 # Merge any form data set via fill()
                 if hasattr(self.browser, '_form_data'):
+                    if form_data is None:
+                        form_data = {}
                     form_data.update(self.browser._form_data)
                     # Clear form data after use
                     delattr(self.browser, '_form_data')
@@ -213,13 +242,17 @@ class TestBrowser:
                     response = self.browser.session.post(action, data=form_data, headers=headers, allow_redirects=True)
                     self.browser._last_response = response
 
-                    # Check for unauthorized
-                    if response.status_code == 401:
+                    # Check for unauthorized or forbidden
+                    if response.status_code in [401, 403]:
                         raise Unauthorized("Unauthorized access")
 
                     # Update browser state with response
                     self.browser._last_url = response.url
                     self.browser._last_html = response.text
+
+                    # Also check if the response contains an unauthorized error message
+                    if 'Insufficient Privileges' in self.browser._last_html or 'Unauthorized' in self.browser._last_html:
+                        raise Unauthorized("Unauthorized access")
 
                     if self.browser._last_html:
                         self.browser._soup = BeautifulSoup(self.browser._last_html, 'html.parser')
