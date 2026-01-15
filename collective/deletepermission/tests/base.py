@@ -6,11 +6,14 @@ from contextlib import contextmanager
 from plone import api
 from plone.app.testing import login
 from plone.app.testing import logout
+from plone.app.testing import TEST_USER_NAME
+from plone.app.testing import TEST_USER_PASSWORD
 from unittest import TestCase
+from urllib.parse import urlparse
 from zExceptions import Unauthorized
+import base64
 import requests
 import transaction
-from urllib.parse import urljoin
 
 
 class TestBrowser:
@@ -21,6 +24,7 @@ class TestBrowser:
         self.portal = layer['portal']
         self.app = layer['app']
         self._current_user = None
+        self._current_password = None
         self._last_response = None
         self._last_url = None
         self._last_html = None
@@ -29,27 +33,45 @@ class TestBrowser:
         # Get the base URL for the portal
         self.base_url = self.portal.absolute_url()
 
-    def login(self, user=None):
+    def _get_auth_headers(self):
+        """Build authentication headers for HTTP requests."""
+        headers = {}
+        if self._current_user:
+            password = self._current_password or self._current_user
+            auth_string = f"{self._current_user}:{password}".encode('utf-8')
+            auth_header = base64.b64encode(auth_string).decode('ascii')
+            headers['Authorization'] = f'Basic {auth_header}'
+        return headers
+
+    def login(self, username=TEST_USER_NAME, password=None):
         """Login as user."""
-        if user is None:
-            from plone.app.testing import TEST_USER_NAME
-            login(self.portal, TEST_USER_NAME)
-            self._current_user = TEST_USER_NAME
-        elif hasattr(user, 'id'):
-            login(self.portal, user.id)
-            self._current_user = user.id
-        elif hasattr(user, 'getUserName'):
-            login(self.portal, user.getUserName())
-            self._current_user = user.getUserName()
-        else:
-            login(self.portal, user)
-            self._current_user = user
+        if hasattr(username, 'id'):
+            username = username.id
+        elif hasattr(username, 'getUserName'):
+            username = username.getUserName()
+
+        # For created test users, password is {userid}{userid}
+        # For TEST_USER, password is TEST_USER_PASSWORD
+        if password is None:
+            if username == TEST_USER_NAME:
+                password = TEST_USER_PASSWORD
+            else:
+                password = f'{username}{username}'
+
+        # Login via Zope security machinery
+        login(self.portal, username)
+        self._current_user = username
+        self._current_password = password
+        self.session.headers.update(self._get_auth_headers())
+
         return self
 
     def logout(self):
         """Logout current user."""
         logout()
         self._current_user = None
+        self._current_password = None
+        self.session.headers.pop('Authorization', None)
         return self
 
     def open(self, obj, view=None):
@@ -64,15 +86,7 @@ class TestBrowser:
 
         # Make HTTP request to get HTML
         try:
-            # Add authentication header if user is logged in
-            headers = {}
-            if self._current_user:
-                # Use HTTP Basic Auth with the session
-                import base64
-                auth_string = f"{self._current_user}:{self._current_user}".encode('utf-8')
-                auth_header = base64.b64encode(auth_string).decode('ascii')
-                headers['Authorization'] = f'Basic {auth_header}'
-
+            headers = self._get_auth_headers()
             response = self.session.get(url, headers=headers)
             self._last_response = response
 
@@ -82,9 +96,8 @@ class TestBrowser:
 
             self._last_html = response.text
 
-            # Also check if the response contains an unauthorized error message
-            # Plone sometimes returns 200 with error message in the page
-            if 'Insufficient Privileges' in self._last_html or 'Unauthorized' in self._last_html:
+            # Check for Plone's Insufficient Privileges page
+            if self._is_unauthorized_response(self._last_html):
                 raise Unauthorized("Unauthorized access")
 
             # Parse HTML with BeautifulSoup
@@ -101,204 +114,216 @@ class TestBrowser:
         """Alias for open."""
         return self.open(obj, view)
 
-    def _parse_form(self, form_id=None, button_text=None):
-        """Parse a form from the current page and return form data."""
-        if not self._soup:
-            return None, None
+    def _is_unauthorized_response(self, response_text, debug=False):
+        """Check if response indicates unauthorized access."""
+        # Look for specific error page indicators
+        soup = BeautifulSoup(response_text, 'html.parser')
+        # Check for Plone error page - h1 with class documentFirstHeading containing error text
+        h1 = soup.find('h1', class_='documentFirstHeading')
+        if h1:
+            h1_text = h1.get_text()
+            if debug:
+                print(f"DEBUG: h1 text = '{h1_text}'")
+            if 'Insufficient Privileges' in h1_text:
+                return True
+            # Also check for login required page
+            if 'Login' in h1_text and 'require_login' in response_text:
+                return True
+        return False
 
-        # Find the form
-        form = None
-        if form_id:
-            form = self._soup.find('form', id=form_id)
-        elif button_text:
-            # Find form containing a button with this text
-            buttons = self._soup.find_all(['button', 'input'])
-            for button in buttons:
-                if button.get('type') in ['submit', 'button'] or button.name == 'button':
-                    if button.get_text(strip=True) == button_text or button.get('value') == button_text:
-                        form = button.find_parent('form')
-                        if form:
-                            break
+    def cut(self):
+        """Cut the current object via direct view call."""
+        if not self._last_obj:
+            raise ValueError("No object to cut")
 
-        if not form:
-            # Try to find any form on the page
-            form = self._soup.find('form')
+        view_url = f"{self._last_obj.absolute_url()}/object_cut"
 
-        if not form:
-            return None, None
+        try:
+            headers = self._get_auth_headers()
+            response = self.session.get(view_url, headers=headers, allow_redirects=True)
 
-        # Get form action
-        action = form.get('action', '')
-        if not action:
-            action = self._last_url
-        elif not action.startswith('http'):
-            action = urljoin(self._last_url, action)
+            # Update browser to show parent after action
+            self._last_response = response
+            self._last_url = response.url
+            self._last_html = response.text
 
-        # Extract all form fields
-        form_data = {}
-        for input_field in form.find_all(['input', 'textarea', 'select']):
-            name = input_field.get('name')
-            if not name:
-                continue
+            # Check for unauthorized - but only by status code, not content
+            if response.status_code in [401, 403]:
+                raise Unauthorized("Unauthorized access")
 
-            field_type = input_field.get('type', 'text').lower()
+            if self._last_html:
+                self._soup = BeautifulSoup(self._last_html, 'html.parser')
+        except requests.RequestException:
+            pass
 
-            if field_type == 'checkbox':
-                if input_field.get('checked'):
-                    form_data[name] = input_field.get('value', 'on')
-            elif field_type == 'radio':
-                if input_field.get('checked'):
-                    form_data[name] = input_field.get('value')
-            elif field_type in ['submit', 'button']:
-                # Only include if this is the button being clicked
-                if button_text and (input_field.get('value') == button_text or input_field.get_text(strip=True) == button_text):
-                    form_data[name] = input_field.get('value', button_text)
-            elif input_field.name == 'select':
-                # Get selected option
-                selected = input_field.find('option', selected=True)
-                if selected:
-                    form_data[name] = selected.get('value', selected.get_text(strip=True))
-            else:
-                # text, hidden, password, etc.
-                value = input_field.get('value', '')
-                if value:
-                    form_data[name] = value
-
-        return action, form_data
-
-    def find(self, text):
-        """Find button/link by text - returns a mock object with click method."""
-        class ClickableElement:
-            def __init__(self, browser, text, obj, view):
-                self.browser = browser
-                self.text = text
-                self.obj = obj
-                self.view = view
-
-            def click(self):
-                """Click the element by submitting its form via HTTP POST."""
-                # Parse the form from the current page
-                action, form_data = self.browser._parse_form(button_text=self.text)
-
-                if not action:
-                    # No form found, try to handle as a direct action
-                    text_lower = self.text.lower()
-
-                    if text_lower in ['cut', 'copy']:
-                        # These are typically links, not form submissions
-                        # Make GET request to the action URL
-                        if text_lower == 'cut':
-                            action_url = f"{self.obj.absolute_url()}/object_cut"
-                        else:  # copy
-                            action_url = f"{self.obj.absolute_url()}/object_copy"
-
-                        try:
-                            headers = {}
-                            if self.browser._current_user:
-                                import base64
-                                auth_string = f"{self.browser._current_user}:{self.browser._current_user}".encode('utf-8')
-                                auth_header = base64.b64encode(auth_string).decode('ascii')
-                                headers['Authorization'] = f'Basic {auth_header}'
-
-                            response = self.browser.session.get(action_url, headers=headers, allow_redirects=True)
-
-                            # Check for unauthorized or forbidden
-                            if response.status_code in [401, 403]:
-                                raise Unauthorized("Unauthorized access")
-
-                            # Also check if the response contains an unauthorized error message
-                            if 'Insufficient Privileges' in response.text or 'Unauthorized' in response.text:
-                                raise Unauthorized("Unauthorized access")
-
-                            # Update browser to show parent after action
-                            self.browser.open(self.obj.aq_parent)
-                        except requests.RequestException:
-                            pass
-
-                        return self.browser
-                    elif text_lower == 'rename':
-                        # Navigate to rename form if no form data yet
-                        if not hasattr(self.browser, '_form_data') or 'New Short Name' not in self.browser._form_data:
-                            self.browser._last_view = 'content_status_modify'
-                            return self.browser
-
-                # Merge any form data set via fill()
-                if hasattr(self.browser, '_form_data'):
-                    if form_data is None:
-                        form_data = {}
-                    form_data.update(self.browser._form_data)
-                    # Clear form data after use
-                    delattr(self.browser, '_form_data')
-
-                # Make HTTP POST request
-                try:
-                    headers = {}
-                    if self.browser._current_user:
-                        import base64
-                        auth_string = f"{self.browser._current_user}:{self.browser._current_user}".encode('utf-8')
-                        auth_header = base64.b64encode(auth_string).decode('ascii')
-                        headers['Authorization'] = f'Basic {auth_header}'
-
-                    response = self.browser.session.post(action, data=form_data, headers=headers, allow_redirects=True)
-                    self.browser._last_response = response
-
-                    # Check for unauthorized or forbidden
-                    if response.status_code in [401, 403]:
-                        raise Unauthorized("Unauthorized access")
-
-                    # Update browser state with response
-                    self.browser._last_url = response.url
-                    self.browser._last_html = response.text
-
-                    # Also check if the response contains an unauthorized error message
-                    if 'Insufficient Privileges' in self.browser._last_html or 'Unauthorized' in self.browser._last_html:
-                        raise Unauthorized("Unauthorized access")
-
-                    if self.browser._last_html:
-                        self.browser._soup = BeautifulSoup(self.browser._last_html, 'html.parser')
-
-                    # After successful delete/rename, update the object reference
-                    # The response URL tells us where we ended up
-                    # We need to traverse to that object
-                    if response.url:
-                        # Extract path from URL
-                        from urllib.parse import urlparse
-                        parsed = urlparse(response.url)
-                        path = parsed.path
-                        # Remove portal path prefix
-                        portal_path = urlparse(self.browser.base_url).path
-                        if path.startswith(portal_path):
-                            path = path[len(portal_path):]
-                        if path.startswith('/'):
-                            path = path[1:]
-
-                        # Traverse to the object
-                        if path:
-                            try:
-                                self.browser._last_obj = self.browser.portal.restrictedTraverse(path)
-                            except (KeyError, AttributeError):
-                                # Object might have been deleted
-                                pass
-
-                except requests.RequestException as e:
-                    # Request failed
-                    pass
-
-                return self.browser
-
-        return ClickableElement(self, text, self._last_obj, self._last_view)
-
-    def fill(self, data):
-        """Fill form fields."""
-        self._form_data = data
         return self
 
-    def save(self):
-        """Save/submit the form."""
-        # For content creation/editing
-        if self._form_data and 'Title' in self._form_data:
-            # This simulates form submission
-            transaction.commit()
+    def copy(self):
+        """Copy the current object via direct view call."""
+        if not self._last_obj:
+            raise ValueError("No object to copy")
+
+        view_url = f"{self._last_obj.absolute_url()}/object_copy"
+
+        try:
+            headers = self._get_auth_headers()
+            response = self.session.get(view_url, headers=headers, allow_redirects=True)
+
+            # Update browser state
+            self._last_response = response
+            self._last_url = response.url
+            self._last_html = response.text
+
+            # Check for unauthorized - but only by status code, not content
+            if response.status_code in [401, 403]:
+                raise Unauthorized("Unauthorized access")
+
+            if self._last_html:
+                self._soup = BeautifulSoup(self._last_html, 'html.parser')
+        except requests.RequestException:
+            pass
+
+        return self
+
+    def delete(self):
+        """Delete the current object by submitting the delete form."""
+        if not self._last_obj:
+            raise ValueError("No object to delete")
+
+        action = f"{self._last_obj.absolute_url()}/delete_confirmation"
+        headers = self._get_auth_headers()
+
+        try:
+            # First GET the form to obtain CSRF token and check permission
+            get_response = self.session.get(action, headers=headers)
+            if get_response.status_code in [401, 403]:
+                raise Unauthorized("Unauthorized access")
+            if self._is_unauthorized_response(get_response.text):
+                raise Unauthorized("Unauthorized access")
+
+            # Parse form to get authenticator token
+            soup = BeautifulSoup(get_response.text, 'html.parser')
+            authenticator = None
+            auth_input = soup.find('input', {'name': '_authenticator'})
+            if auth_input:
+                authenticator = auth_input.get('value')
+
+            # Plone 6 uses z3c.form - button is form.buttons.Delete
+            form_data = {
+                'form.buttons.Delete': 'Delete',
+            }
+            if authenticator:
+                form_data['_authenticator'] = authenticator
+
+            response = self.session.post(action, data=form_data, headers=headers, allow_redirects=True)
+            self._last_response = response
+
+            # Check for unauthorized or forbidden
+            if response.status_code in [401, 403]:
+                raise Unauthorized("Unauthorized access")
+
+            # Update browser state with response
+            self._last_url = response.url
+            self._last_html = response.text
+
+            # Check for Plone's Insufficient Privileges page
+            if self._is_unauthorized_response(self._last_html):
+                raise Unauthorized("Unauthorized access")
+
+            if self._last_html:
+                self._soup = BeautifulSoup(self._last_html, 'html.parser')
+
+            # Update to parent object after delete
+            if response.url:
+                parsed = urlparse(response.url)
+                path = parsed.path
+                portal_path = urlparse(self.base_url).path
+                if path.startswith(portal_path):
+                    path = path[len(portal_path):]
+                if path.startswith('/'):
+                    path = path[1:]
+
+                if path:
+                    try:
+                        self._last_obj = self.portal.restrictedTraverse(path)
+                    except (KeyError, AttributeError):
+                        pass
+
+        except requests.RequestException:
+            pass
+
+        return self
+
+    def rename(self, new_id):
+        """Rename the current object via HTTP request to object_rename view."""
+        if not self._last_obj:
+            raise ValueError("No object to rename")
+
+        # Use object_rename view directly
+        action = f"{self._last_obj.absolute_url()}/object_rename"
+        headers = self._get_auth_headers()
+
+        try:
+            # First GET the form to obtain CSRF token
+            get_response = self.session.get(action, headers=headers)
+            if get_response.status_code in [401, 403]:
+                raise Unauthorized("Unauthorized access")
+            if self._is_unauthorized_response(get_response.text):
+                raise Unauthorized("Unauthorized access")
+
+            # Parse form to get authenticator token
+            soup = BeautifulSoup(get_response.text, 'html.parser')
+            authenticator = None
+            auth_input = soup.find('input', {'name': '_authenticator'})
+            if auth_input:
+                authenticator = auth_input.get('value')
+
+            # Plone 6 uses z3c.form - field names are form.widgets.FIELDNAME
+            form_data = {
+                'form.widgets.new_id': new_id,
+                'form.widgets.new_title': new_id,  # Use same as id if no specific title
+                'form.buttons.Rename': 'Rename',
+            }
+            if authenticator:
+                form_data['_authenticator'] = authenticator
+
+            response = self.session.post(action, data=form_data, headers=headers, allow_redirects=True)
+            self._last_response = response
+
+            # Check for unauthorized or forbidden
+            if response.status_code in [401, 403]:
+                raise Unauthorized("Unauthorized access")
+
+            # Update browser state
+            self._last_url = response.url
+            self._last_html = response.text
+
+            # Check for Plone's Insufficient Privileges page
+            if self._is_unauthorized_response(self._last_html):
+                raise Unauthorized("Unauthorized access")
+
+            if self._last_html:
+                self._soup = BeautifulSoup(self._last_html, 'html.parser')
+
+            # Update object reference
+            if response.url:
+                parsed = urlparse(response.url)
+                path = parsed.path
+                portal_path = urlparse(self.base_url).path
+                if path.startswith(portal_path):
+                    path = path[len(portal_path):]
+                if path.startswith('/'):
+                    path = path[1:]
+
+                if path:
+                    try:
+                        self._last_obj = self.portal.restrictedTraverse(path)
+                    except (KeyError, AttributeError):
+                        pass
+
+        except requests.RequestException:
+            pass
+
         return self
 
     @contextmanager
@@ -443,9 +468,12 @@ class FunctionalTestCase(TestCase):
         if email is None:
             email = f'{userid}@example.com'
 
+        # Set password for HTTP Basic Auth in tests (min 8 chars required)
+        password = f'{userid}{userid}'
         user = api.user.create(
             email=email,
             username=userid,
+            password=password,
             properties={
                 'fullname': fullname or userid,
             }

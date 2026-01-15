@@ -17,7 +17,7 @@ class TestBrowserStatusMessages(FunctionalTestCase):
         """Test that deleting an object shows success message in rendered HTML."""
         browser = self.get_browser()
         browser.login(self.user_a).open(self.doc, view='delete_confirmation')
-        browser.find('Delete').click()
+        browser.delete()
 
         # After delete, we should have a success message
         # The exact message may vary, but there should be an info message
@@ -29,7 +29,7 @@ class TestBrowserStatusMessages(FunctionalTestCase):
         """Test that copying shows status message."""
         browser = self.get_browser()
         browser.login(self.user_a).open(self.doc)
-        browser.find('Copy').click()
+        browser.copy()
 
         # Should have info message about copy
         info_msgs = browser.info_messages()
@@ -48,9 +48,7 @@ class TestBrowserStatusMessages(FunctionalTestCase):
         """Test successful rename shows no error messages."""
         browser = self.get_browser()
         browser.login(self.user_a).open(self.doc)
-        browser.find('Rename').click()
-        browser.fill({'New Short Name': 'renamed-doc'}).find('Rename').click()
+        browser.rename('renamed-doc')
 
-        # Should have no errors
         browser.assert_no_error_messages()
         self.assertEqual(self.folder.absolute_url() + '/renamed-doc', browser.url)

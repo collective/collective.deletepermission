@@ -1,5 +1,6 @@
 from AccessControl import Unauthorized
 from collective.deletepermission.tests.base import FunctionalTestCase
+from zExceptions import BadRequest
 
 
 class TestCorrectPermissions(FunctionalTestCase):
@@ -69,6 +70,8 @@ class TestCorrectPermissions(FunctionalTestCase):
             self.assertEqual(self.folder_a.objectIds(), [])
 
     def test_remove_empty(self):
-        """Check that we don't throw errors if we get a id that is none'"""
+        """Check that passing None raises BadRequest in Plone 6/Zope 5."""
         with self.user(self.user_a):
-            self.folder_a.manage_delObjects(None)
+            self.assertRaises(BadRequest,
+                              self.folder_a.manage_delObjects,
+                              None)

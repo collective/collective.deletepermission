@@ -33,7 +33,7 @@ class TestCorrectPermissions(FunctionalTestCase):
         """
         browser = self.get_browser()
         browser.login(self.user_b).open(self.doc_b, view='delete_confirmation')
-        browser.find('Delete').click()
+        browser.delete()
 
     def test_userb_cut_docb(self):
         """
@@ -41,7 +41,7 @@ class TestCorrectPermissions(FunctionalTestCase):
         """
         browser = self.get_browser()
         browser.login(self.user_b).open(self.doc_b)
-        browser.find('Cut').click()
+        browser.cut()
 
     def test_userb_rename_docb(self):
         """
@@ -49,8 +49,7 @@ class TestCorrectPermissions(FunctionalTestCase):
         """
         browser = self.get_browser()
         browser.login(self.user_b).open(self.doc_b)
-        browser.find('Rename').click()
-        browser.fill({'New Short Name': 'doc-b-renamed'}).find('Rename').click()
+        browser.rename('doc-b-renamed')
         browser.assert_no_error_messages()
         self.assertEqual(self.folder_a.absolute_url() + '/doc-b-renamed',
                           browser.url)
@@ -62,7 +61,7 @@ class TestCorrectPermissions(FunctionalTestCase):
         browser = self.get_browser()
         browser.login(self.user_a).open(self.folder_a,
                                         view='delete_confirmation')
-        browser.find('Delete').click()
+        browser.delete()
 
     def test_usera_cut_folder(self):
         """
@@ -70,7 +69,7 @@ class TestCorrectPermissions(FunctionalTestCase):
         """
         browser = self.get_browser()
         browser.login(self.user_a).open(self.folder_a)
-        browser.find('Cut').click()
+        browser.cut()
 
     def test_usera_rename_folder(self):
         """
@@ -78,8 +77,7 @@ class TestCorrectPermissions(FunctionalTestCase):
         """
         browser = self.get_browser()
         browser.login(self.user_a).open(self.folder_a)
-        browser.find('Rename').click()
-        browser.fill({'New Short Name': 'folder-a-renamed'}).find('Rename').click()
+        browser.rename('folder-a-renamed')
         browser.assert_no_error_messages()
         self.assertEqual(self.folder.absolute_url() + '/folder-a-renamed',
                           browser.url)
@@ -92,7 +90,7 @@ class TestCorrectPermissions(FunctionalTestCase):
         browser.login(self.user_b).open(self.folder_a,
                                         view='delete_confirmation')
         with browser.expect_unauthorized():
-            browser.find("Delete").click()
+            browser.delete()
 
     def test_userb_cut_folder(self):
         """
@@ -120,7 +118,7 @@ class TestCorrectPermissions(FunctionalTestCase):
         """
         browser = self.get_browser()
         browser.login(self.user_a).open(self.doc_a, view='delete_confirmation')
-        browser.find("Delete").click()
+        browser.delete()
 
     def test_usera_cut_doc_a(self):
         """
@@ -128,7 +126,7 @@ class TestCorrectPermissions(FunctionalTestCase):
         """
         browser = self.get_browser()
         browser.login(self.user_a).open(self.doc_a)
-        browser.find('Cut').click()
+        browser.cut()
 
     def test_usera_rename_doc_a(self):
         """
@@ -136,8 +134,7 @@ class TestCorrectPermissions(FunctionalTestCase):
         """
         browser = self.get_browser()
         browser.login(self.user_a).open(self.doc_a)
-        browser.find('Rename').click()
-        browser.fill({'New Short Name': 'doc-a-renamed'}).find('Rename').click()
+        browser.rename('doc-a-renamed')
         browser.assert_no_error_messages()
         self.assertEqual(self.folder_a.absolute_url() + '/doc-a-renamed',
                           browser.url)
@@ -148,7 +145,7 @@ class TestCorrectPermissions(FunctionalTestCase):
         """
         browser = self.get_browser()
         browser.login(self.user_a).open(self.doc_b, view='delete_confirmation')
-        browser.find('Delete').click()
+        browser.delete()
 
     def test_usera_cut_doc_b(self):
         """
@@ -156,7 +153,7 @@ class TestCorrectPermissions(FunctionalTestCase):
         """
         browser = self.get_browser()
         browser.login(self.user_a).open(self.doc_b)
-        browser.find('Cut').click()
+        browser.cut()
 
     def test_usera_rename_doc_b(self):
         """
@@ -164,8 +161,7 @@ class TestCorrectPermissions(FunctionalTestCase):
         """
         browser = self.get_browser()
         browser.login(self.user_a).open(self.doc_b)
-        browser.find('Rename').click()
-        browser.fill({'New Short Name': 'doc-b-renamed'}).find('Rename').click()
+        browser.rename('doc-b-renamed')
         browser.assert_no_error_messages()
         self.assertEqual(self.folder_a.absolute_url() + '/doc-b-renamed',
                           browser.url)
@@ -177,7 +173,7 @@ class TestCorrectPermissions(FunctionalTestCase):
         browser = self.get_browser()
         browser.login(self.user_b).open(self.doc_a, view='delete_confirmation')
         with browser.expect_unauthorized():
-            browser.find('Delete').click()
+            browser.delete()
 
     def test_userb_cut_doc_a(self):
         """
@@ -197,4 +193,4 @@ class TestCorrectPermissions(FunctionalTestCase):
         browser.login(self.user_b).open(self.doc_a)
         self.assertNotIn('Rename', self.get_actions())
         with browser.expect_unauthorized():
-            browser.open(self.folder_a, view='object_rename')
+            browser.open(self.doc_a, view='object_rename')
