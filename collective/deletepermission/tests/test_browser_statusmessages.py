@@ -16,8 +16,8 @@ class TestBrowserStatusMessages(FunctionalTestCase):
     def test_delete_shows_status_message(self):
         """Test that deleting an object shows success message in rendered HTML."""
         browser = self.get_browser()
-        browser.login(self.user_a).open(self.doc, view='delete_confirmation')
-        browser.delete()
+        browser.login(self.user_a).open(self.doc.absolute_url() + '/delete_confirmation')
+        browser.delete(self.doc)
 
         # After delete, we should have a success message
         # The exact message may vary, but there should be an info message
@@ -28,8 +28,8 @@ class TestBrowserStatusMessages(FunctionalTestCase):
     def test_copy_shows_status_message(self):
         """Test that copying shows status message."""
         browser = self.get_browser()
-        browser.login(self.user_a).open(self.doc)
-        browser.copy()
+        browser.login(self.user_a).open(self.doc.absolute_url())
+        browser.copy(self.doc)
 
         # Should have info message about copy
         info_msgs = browser.info_messages()
@@ -39,7 +39,7 @@ class TestBrowserStatusMessages(FunctionalTestCase):
     def test_assert_no_error_messages_passes_when_no_errors(self):
         """Test that assert_no_error_messages works correctly."""
         browser = self.get_browser()
-        browser.login(self.user_a).open(self.doc)
+        browser.login(self.user_a).open(self.doc.absolute_url())
 
         # This should not raise an exception
         browser.assert_no_error_messages()
@@ -47,8 +47,8 @@ class TestBrowserStatusMessages(FunctionalTestCase):
     def test_rename_shows_no_errors_on_success(self):
         """Test successful rename shows no error messages."""
         browser = self.get_browser()
-        browser.login(self.user_a).open(self.doc)
-        browser.rename('renamed-doc')
+        browser.login(self.user_a).open(self.doc.absolute_url())
+        browser.rename(self.doc, 'renamed-doc')
 
         browser.assert_no_error_messages()
         self.assertEqual(self.folder.absolute_url() + '/renamed-doc', browser.url)

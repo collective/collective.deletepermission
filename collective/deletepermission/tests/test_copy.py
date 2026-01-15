@@ -17,11 +17,11 @@ class TestCopy(FunctionalTestCase):
         folder = self.create_folder()
         self.revoke_permission('Delete portal content', on=folder)
         browser = self.get_browser()
-        browser.login().open(folder)
+        browser.login().open(folder.absolute_url())
         self.assertFalse(api.user.has_permission("Delete portal content", obj=folder))
         self.assertTrue(api.user.has_permission("Copy or Move", obj=folder))
         # Copy should succeed without raising Unauthorized
-        browser.copy()
+        browser.copy(folder)
         # Verify no error by checking response status (200 = OK)
         self.assertEqual(browser._last_response.status_code, 200)
 
@@ -29,8 +29,8 @@ class TestCopy(FunctionalTestCase):
         folder = self.create_folder()
         self.revoke_permission('Copy or Move', on=folder)
         browser = self.get_browser()
-        browser.login().open(folder)
+        browser.login().open(folder.absolute_url())
         self.assertFalse(api.user.has_permission("Copy or Move", obj=folder))
 
         with browser.expect_unauthorized():
-            browser.open(folder, view="object_copy")
+            browser.open(folder.absolute_url() + "/object_copy")

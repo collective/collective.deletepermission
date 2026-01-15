@@ -22,16 +22,16 @@ class TestDeleteAction(FunctionalTestCase):
 
     def test_user_can_delete_own_contents(self):
         browser = self.get_browser()
-        browser.login(self.john).visit(self.content)
-        self.assertIn('Delete', self.get_actions(),
+        browser.login(self.john).open(self.content.absolute_url())
+        self.assertIn('Delete', self.get_actions(self.content),
                       'A user should be able to delete his own content.')
 
     def test_user_can_not_delete_without_delete_objects_on_parent(self):
         self.revoke_permission('Delete objects', on=self.container)
         transaction.commit()
         browser = self.get_browser()
-        browser.login(self.john).visit(self.content)
-        self.assertNotIn('Delete', self.get_actions(),
+        browser.login(self.john).open(self.content.absolute_url())
+        self.assertNotIn('Delete', self.get_actions(self.content),
                          'A user should not be able to delete content'
                          ' without "Delete objects" on the parent.')
 
@@ -56,15 +56,15 @@ class TestCutAction(FunctionalTestCase):
 
     def test_user_can_cut_own_contents(self):
         browser = self.get_browser()
-        browser.login(self.john).visit(self.content)
-        self.assertIn('Cut', self.get_actions(),
+        browser.login(self.john).open(self.content.absolute_url())
+        self.assertIn('Cut', self.get_actions(self.content),
                       'A user should be able to cut his own content.')
 
     def test_user_can_not_cut_without_delete_objects_on_parent(self):
         self.revoke_permission('Delete objects', on=self.container)
         transaction.commit()
         browser = self.get_browser()
-        browser.login(self.john).visit(self.content)
-        self.assertNotIn('Cut', self.get_actions(),
+        browser.login(self.john).open(self.content.absolute_url())
+        self.assertNotIn('Cut', self.get_actions(self.content),
                          'A user should not be able to cut content'
                          ' without "Delete objects" on the parent.')

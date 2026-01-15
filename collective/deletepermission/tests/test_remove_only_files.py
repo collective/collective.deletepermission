@@ -27,18 +27,18 @@ class TestOnlyFiles(FunctionalTestCase):
     def test_delete_secondlevel(self):
         """Test if we are able to delete the file in the subfolder"""
         browser = self.get_browser()
-        browser.login(self.user_a).open(self.secondleveldoc, view='delete_confirmation')
-        browser.delete()
+        browser.login(self.user_a).open(self.secondleveldoc.absolute_url() + '/delete_confirmation')
+        browser.delete(self.secondleveldoc)
 
     def test_delete_firstlevel(self):
         """Test if we are able to delete the file in the rootfolder"""
         browser = self.get_browser()
-        browser.login(self.user_a).open(self.firstleveldoc, view='delete_confirmation')
-        browser.delete()
+        browser.login(self.user_a).open(self.firstleveldoc.absolute_url() + '/delete_confirmation')
+        browser.delete(self.firstleveldoc)
 
     def test_delete_subfolder(self):
         """Test if we can delete the subfolder. This should not be the case."""
         browser = self.get_browser()
-        browser.login(self.user_a).open(self.subfolder, view='delete_confirmation')
+        browser.login(self.user_a).open(self.subfolder.absolute_url() + '/delete_confirmation')
         with browser.expect_unauthorized():
-            browser.delete()
+            browser.delete(self.subfolder)

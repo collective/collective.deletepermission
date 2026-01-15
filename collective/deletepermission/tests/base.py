@@ -9,7 +9,6 @@ from plone.app.testing import logout
 from plone.app.testing import TEST_USER_NAME
 from plone.app.testing import TEST_USER_PASSWORD
 from unittest import TestCase
-from urllib.parse import urlparse
 from zExceptions import Unauthorized
 import base64
 import requests
@@ -74,15 +73,9 @@ class TestBrowser:
         self.session.headers.pop('Authorization', None)
         return self
 
-    def open(self, obj, view=None):
-        """Open an object and render its view via HTTP request."""
-        if view:
-            url = f"{obj.absolute_url()}/{view}"
-        else:
-            url = obj.absolute_url()
+    def open(self, url):
+        """Open a URL via HTTP request."""
         self._last_url = url
-        self._last_obj = obj
-        self._last_view = view
 
         # Make HTTP request to get HTML
         try:
@@ -103,16 +96,12 @@ class TestBrowser:
             # Parse HTML with BeautifulSoup
             if self._last_html:
                 self._soup = BeautifulSoup(self._last_html, 'html.parser')
-        except requests.RequestException as e:
+        except requests.RequestException:
             # Request failed, that's ok for some tests
             self._last_html = None
             self._soup = None
 
         return self
-
-    def visit(self, obj, view=None):
-        """Alias for open."""
-        return self.open(obj, view)
 
     def _is_unauthorized_response(self, response_text, debug=False):
         """Check if response indicates unauthorized access."""
@@ -131,12 +120,9 @@ class TestBrowser:
                 return True
         return False
 
-    def cut(self):
-        """Cut the current object via direct view call."""
-        if not self._last_obj:
-            raise ValueError("No object to cut")
-
-        view_url = f"{self._last_obj.absolute_url()}/object_cut"
+    def cut(self, obj):
+        """Cut the given object via direct view call."""
+        view_url = f"{obj.absolute_url()}/object_cut"
 
         try:
             headers = self._get_auth_headers()
@@ -158,12 +144,9 @@ class TestBrowser:
 
         return self
 
-    def copy(self):
-        """Copy the current object via direct view call."""
-        if not self._last_obj:
-            raise ValueError("No object to copy")
-
-        view_url = f"{self._last_obj.absolute_url()}/object_copy"
+    def copy(self, obj):
+        """Copy the given object via direct view call."""
+        view_url = f"{obj.absolute_url()}/object_copy"
 
         try:
             headers = self._get_auth_headers()
@@ -185,12 +168,9 @@ class TestBrowser:
 
         return self
 
-    def delete(self):
-        """Delete the current object by submitting the delete form."""
-        if not self._last_obj:
-            raise ValueError("No object to delete")
-
-        action = f"{self._last_obj.absolute_url()}/delete_confirmation"
+    def delete(self, obj):
+        """Delete the given object by submitting the delete form."""
+        action = f"{obj.absolute_url()}/delete_confirmation"
         headers = self._get_auth_headers()
 
         try:
@@ -233,34 +213,15 @@ class TestBrowser:
             if self._last_html:
                 self._soup = BeautifulSoup(self._last_html, 'html.parser')
 
-            # Update to parent object after delete
-            if response.url:
-                parsed = urlparse(response.url)
-                path = parsed.path
-                portal_path = urlparse(self.base_url).path
-                if path.startswith(portal_path):
-                    path = path[len(portal_path):]
-                if path.startswith('/'):
-                    path = path[1:]
-
-                if path:
-                    try:
-                        self._last_obj = self.portal.restrictedTraverse(path)
-                    except (KeyError, AttributeError):
-                        pass
-
         except requests.RequestException:
             pass
 
         return self
 
-    def rename(self, new_id):
-        """Rename the current object via HTTP request to object_rename view."""
-        if not self._last_obj:
-            raise ValueError("No object to rename")
-
+    def rename(self, obj, new_id):
+        """Rename the given object via HTTP request to object_rename view."""
         # Use object_rename view directly
-        action = f"{self._last_obj.absolute_url()}/object_rename"
+        action = f"{obj.absolute_url()}/object_rename"
         headers = self._get_auth_headers()
 
         try:
@@ -304,22 +265,6 @@ class TestBrowser:
 
             if self._last_html:
                 self._soup = BeautifulSoup(self._last_html, 'html.parser')
-
-            # Update object reference
-            if response.url:
-                parsed = urlparse(response.url)
-                path = parsed.path
-                portal_path = urlparse(self.base_url).path
-                if path.startswith(portal_path):
-                    path = path[len(portal_path):]
-                if path.startswith('/'):
-                    path = path[1:]
-
-                if path:
-                    try:
-                        self._last_obj = self.portal.restrictedTraverse(path)
-                    except (KeyError, AttributeError):
-                        pass
 
         except requests.RequestException:
             pass
@@ -424,16 +369,10 @@ class FunctionalTestCase(TestCase):
             self._browser = TestBrowser(self.layer)
         return self._browser
 
-    def get_actions(self):
-        """Get available actions for the current context."""
-        # Get actions from the content menu
-        if not hasattr(self, '_browser') or not hasattr(self._browser, '_last_obj'):
-            return []
-
-        obj = self._browser._last_obj
+    def get_actions(self, obj):
+        """Get available actions for the given object."""
         context_state = obj.restrictedTraverse('@@plone_context_state')
         actions = context_state.actions('object_buttons')
-
         return [action['title'] for action in actions]
 
     def get_status_messages(self):
