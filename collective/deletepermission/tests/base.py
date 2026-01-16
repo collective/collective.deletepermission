@@ -1,5 +1,3 @@
-from AccessControl.SecurityManagement import getSecurityManager
-from AccessControl.SecurityManagement import setSecurityManager
 from bs4 import BeautifulSoup
 from collective.deletepermission import testing
 from contextlib import contextmanager
@@ -103,68 +101,50 @@ class TestBrowser:
 
         return self
 
-    def _is_unauthorized_response(self, response_text, debug=False):
-        """Check if response indicates unauthorized access."""
-        # Look for specific error page indicators
+    def _is_unauthorized_response(self, response_text):
+        """Check if response indicates unauthorized access.
+        If logged in plone returns 200 OK with insufficient privileges page.
+        """
         soup = BeautifulSoup(response_text, 'html.parser')
-        # Check for Plone error page - h1 with class documentFirstHeading containing error text
         h1 = soup.find('h1', class_='documentFirstHeading')
-        if h1:
-            h1_text = h1.get_text()
-            if debug:
-                print(f"DEBUG: h1 text = '{h1_text}'")
-            if 'Insufficient Privileges' in h1_text:
-                return True
-            # Also check for login required page
-            if 'Login' in h1_text and 'require_login' in response_text:
-                return True
-        return False
+        return h1 and 'Insufficient Privileges' in h1.get_text()
 
     def cut(self, obj):
         """Cut the given object via direct view call."""
         view_url = f"{obj.absolute_url()}/object_cut"
 
-        try:
-            headers = self._get_auth_headers()
-            response = self.session.get(view_url, headers=headers, allow_redirects=True)
+        headers = self._get_auth_headers()
+        response = self.session.get(view_url, headers=headers, allow_redirects=True)
 
-            # Update browser to show parent after action
-            self._last_response = response
-            self._last_url = response.url
-            self._last_html = response.text
+        self._last_response = response
+        self._last_url = response.url
+        self._last_html = response.text
 
-            # Check for unauthorized - but only by status code, not content
-            if response.status_code in [401, 403]:
-                raise Unauthorized("Unauthorized access")
+        # Check for unauthorized - but only by status code, not content
+        if response.status_code in [401, 403]:
+            raise Unauthorized("Unauthorized access")
 
-            if self._last_html:
-                self._soup = BeautifulSoup(self._last_html, 'html.parser')
-        except requests.RequestException:
-            pass
+        if self._last_html:
+            self._soup = BeautifulSoup(self._last_html, 'html.parser')
 
         return self
 
     def copy(self, obj):
         """Copy the given object via direct view call."""
         view_url = f"{obj.absolute_url()}/object_copy"
+        headers = self._get_auth_headers()
+        response = self.session.get(view_url, headers=headers, allow_redirects=True)
 
-        try:
-            headers = self._get_auth_headers()
-            response = self.session.get(view_url, headers=headers, allow_redirects=True)
+        self._last_response = response
+        self._last_url = response.url
+        self._last_html = response.text
 
-            # Update browser state
-            self._last_response = response
-            self._last_url = response.url
-            self._last_html = response.text
+        # Check for unauthorized - but only by status code, not content
+        if response.status_code in [401, 403]:
+            raise Unauthorized("Unauthorized access")
 
-            # Check for unauthorized - but only by status code, not content
-            if response.status_code in [401, 403]:
-                raise Unauthorized("Unauthorized access")
-
-            if self._last_html:
-                self._soup = BeautifulSoup(self._last_html, 'html.parser')
-        except requests.RequestException:
-            pass
+        if self._last_html:
+            self._soup = BeautifulSoup(self._last_html, 'html.parser')
 
         return self
 
@@ -173,49 +153,43 @@ class TestBrowser:
         action = f"{obj.absolute_url()}/delete_confirmation"
         headers = self._get_auth_headers()
 
-        try:
-            # First GET the form to obtain CSRF token and check permission
-            get_response = self.session.get(action, headers=headers)
-            if get_response.status_code in [401, 403]:
-                raise Unauthorized("Unauthorized access")
-            if self._is_unauthorized_response(get_response.text):
-                raise Unauthorized("Unauthorized access")
+        # First GET the form to obtain CSRF token and check permission
+        get_response = self.session.get(action, headers=headers)
+        if get_response.status_code in [401, 403]:
+            raise Unauthorized("Unauthorized access")
+        if self._is_unauthorized_response(get_response.text):
+            raise Unauthorized("Unauthorized access")
 
-            # Parse form to get authenticator token
-            soup = BeautifulSoup(get_response.text, 'html.parser')
-            authenticator = None
-            auth_input = soup.find('input', {'name': '_authenticator'})
-            if auth_input:
-                authenticator = auth_input.get('value')
+        # Parse form to get authenticator token
+        soup = BeautifulSoup(get_response.text, 'html.parser')
+        authenticator = None
+        auth_input = soup.find('input', {'name': '_authenticator'})
+        if auth_input:
+            authenticator = auth_input.get('value')
 
-            # Plone 6 uses z3c.form - button is form.buttons.Delete
-            form_data = {
-                'form.buttons.Delete': 'Delete',
-            }
-            if authenticator:
-                form_data['_authenticator'] = authenticator
+        # Plone 6 uses z3c.form - button is form.buttons.Delete
+        form_data = {
+            'form.buttons.Delete': 'Delete',
+        }
+        if authenticator:
+            form_data['_authenticator'] = authenticator
 
-            response = self.session.post(action, data=form_data, headers=headers, allow_redirects=True)
-            self._last_response = response
+        response = self.session.post(action, data=form_data, headers=headers, allow_redirects=True)
+        self._last_response = response
 
-            # Check for unauthorized or forbidden
-            if response.status_code in [401, 403]:
-                raise Unauthorized("Unauthorized access")
+        # Check for unauthorized or forbidden
+        if response.status_code in [401, 403]:
+            raise Unauthorized("Unauthorized access")
 
-            # Update browser state with response
-            self._last_url = response.url
-            self._last_html = response.text
+        self._last_url = response.url
+        self._last_html = response.text
 
-            # Check for Plone's Insufficient Privileges page
-            if self._is_unauthorized_response(self._last_html):
-                raise Unauthorized("Unauthorized access")
+        # Check for Plone's Insufficient Privileges page
+        if self._is_unauthorized_response(self._last_html):
+            raise Unauthorized("Unauthorized access")
 
-            if self._last_html:
-                self._soup = BeautifulSoup(self._last_html, 'html.parser')
-
-        except requests.RequestException:
-            pass
-
+        if self._last_html:
+            self._soup = BeautifulSoup(self._last_html, 'html.parser')
         return self
 
     def rename(self, obj, new_id):
@@ -224,50 +198,45 @@ class TestBrowser:
         action = f"{obj.absolute_url()}/object_rename"
         headers = self._get_auth_headers()
 
-        try:
-            # First GET the form to obtain CSRF token
-            get_response = self.session.get(action, headers=headers)
-            if get_response.status_code in [401, 403]:
-                raise Unauthorized("Unauthorized access")
-            if self._is_unauthorized_response(get_response.text):
-                raise Unauthorized("Unauthorized access")
+        # First GET the form to obtain CSRF token
+        get_response = self.session.get(action, headers=headers)
+        if get_response.status_code in [401, 403]:
+            raise Unauthorized("Unauthorized access")
+        if self._is_unauthorized_response(get_response.text):
+            raise Unauthorized("Unauthorized access")
 
-            # Parse form to get authenticator token
-            soup = BeautifulSoup(get_response.text, 'html.parser')
-            authenticator = None
-            auth_input = soup.find('input', {'name': '_authenticator'})
-            if auth_input:
-                authenticator = auth_input.get('value')
+        # Parse form to get authenticator token
+        soup = BeautifulSoup(get_response.text, 'html.parser')
+        authenticator = None
+        auth_input = soup.find('input', {'name': '_authenticator'})
+        if auth_input:
+            authenticator = auth_input.get('value')
 
-            # Plone 6 uses z3c.form - field names are form.widgets.FIELDNAME
-            form_data = {
-                'form.widgets.new_id': new_id,
-                'form.widgets.new_title': new_id,  # Use same as id if no specific title
-                'form.buttons.Rename': 'Rename',
-            }
-            if authenticator:
-                form_data['_authenticator'] = authenticator
+        # Plone 6 uses z3c.form - field names are form.widgets.FIELDNAME
+        form_data = {
+            'form.widgets.new_id': new_id,
+            'form.widgets.new_title': new_id,  # Use same as id if no specific title
+            'form.buttons.Rename': 'Rename',
+        }
+        if authenticator:
+            form_data['_authenticator'] = authenticator
 
-            response = self.session.post(action, data=form_data, headers=headers, allow_redirects=True)
-            self._last_response = response
+        response = self.session.post(action, data=form_data, headers=headers, allow_redirects=True)
+        self._last_response = response
 
-            # Check for unauthorized or forbidden
-            if response.status_code in [401, 403]:
-                raise Unauthorized("Unauthorized access")
+        # Check for unauthorized or forbidden
+        if response.status_code in [401, 403]:
+            raise Unauthorized("Unauthorized access")
 
-            # Update browser state
-            self._last_url = response.url
-            self._last_html = response.text
+        self._last_url = response.url
+        self._last_html = response.text
 
-            # Check for Plone's Insufficient Privileges page
-            if self._is_unauthorized_response(self._last_html):
-                raise Unauthorized("Unauthorized access")
+        # Check for Plone's Insufficient Privileges page
+        if self._is_unauthorized_response(self._last_html):
+            raise Unauthorized("Unauthorized access")
 
-            if self._last_html:
-                self._soup = BeautifulSoup(self._last_html, 'html.parser')
-
-        except requests.RequestException:
-            pass
+        if self._last_html:
+            self._soup = BeautifulSoup(self._last_html, 'html.parser')
 
         return self
 
@@ -354,12 +323,7 @@ class FunctionalTestCase(TestCase):
         transaction.commit()
 
     def set_local_roles(self, context, user, *roles):
-        if hasattr(user, 'id'):
-            user = user.id
-        elif hasattr(user, 'getUserName'):
-            user = user.getUserName()
-
-        context.manage_setLocalRoles(user, tuple(roles))
+        context.manage_setLocalRoles(user.getId(), tuple(roles))
         context.reindexObjectSecurity()
         transaction.commit()
 
@@ -375,30 +339,12 @@ class FunctionalTestCase(TestCase):
         actions = context_state.actions('object_buttons')
         return [action['title'] for action in actions]
 
-    def get_status_messages(self):
-        """Get status messages from the current browser view."""
-        if hasattr(self, '_browser') and self._browser:
-            return self._browser.get_status_messages()
-        return {'info': [], 'warning': [], 'error': []}
-
-    def assert_no_error_messages(self):
-        """Assert there are no error messages in the current browser view."""
-        if hasattr(self, '_browser') and self._browser:
-            self._browser.assert_no_error_messages()
-
-    @contextmanager
-    def user(self, username):
+    def login(self, username):
         if hasattr(username, 'id'):
             username = username.id
         elif hasattr(username, 'getUserName'):
             username = username.getUserName()
-
-        sm = getSecurityManager()
         login(self.layer['portal'], username)
-        try:
-            yield
-        finally:
-            setSecurityManager(sm)
 
     def create_user(self, userid=None, email=None, username=None, fullname=None, roles=None):
         """Helper to create a user."""

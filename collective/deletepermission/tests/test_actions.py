@@ -15,10 +15,10 @@ class TestDeleteAction(FunctionalTestCase):
             fullname='John Doe',
             roles=['Member', 'Contributor']
         )
-        with self.user(self.hugo):
-            self.container = self.create_folder()
-        with self.user(self.john):
-            self.content = self.create_folder(container=self.container)
+        self.login(self.hugo)
+        self.container = self.create_folder()
+        self.login(self.john)
+        self.content = self.create_folder(container=self.container)
 
     def test_user_can_delete_own_contents(self):
         browser = self.get_browser()
@@ -49,10 +49,10 @@ class TestCutAction(FunctionalTestCase):
             fullname='John Doe',
             roles=['Member', 'Contributor']
         )
-        with self.user(self.hugo):
-            self.container = self.create_folder()
-        with self.user(self.john):
-            self.content = self.create_folder(container=self.container)
+        self.login(self.hugo)
+        self.container = self.create_folder()
+        self.login(self.john)
+        self.content = self.create_folder(container=self.container)
 
     def test_user_can_cut_own_contents(self):
         browser = self.get_browser()

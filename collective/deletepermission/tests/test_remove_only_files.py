@@ -14,15 +14,15 @@ class TestOnlyFiles(FunctionalTestCase):
             title='subfolder'
         )
 
-        with self.user(self.user_a):
-            self.firstleveldoc = self.create_folder(
-                container=self.folder,
-                title='doc-firstleveldoc'
-            )
-            self.secondleveldoc = self.create_folder(
-                container=self.subfolder,
-                title='doc-secondleveldoc'
-            )
+        self.login(self.user_a)
+        self.firstleveldoc = self.create_folder(
+            container=self.folder,
+            title='doc-firstleveldoc'
+        )
+        self.secondleveldoc = self.create_folder(
+            container=self.subfolder,
+            title='doc-secondleveldoc'
+        )
 
     def test_delete_secondlevel(self):
         """Test if we are able to delete the file in the subfolder"""

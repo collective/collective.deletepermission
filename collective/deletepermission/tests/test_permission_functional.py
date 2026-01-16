@@ -11,21 +11,21 @@ class TestCorrectPermissions(FunctionalTestCase):
         self.set_local_roles(self.folder, self.user_a, 'Contributor')
         self.set_local_roles(self.folder, self.user_b, 'Contributor')
 
-        with self.user(self.user_a):
-            self.folder_a = self.create_folder(
-                container=self.folder,
-                title='folder-a'
-            )
-            self.doc_a = self.create_folder(
-                container=self.folder_a,
-                title='doc-a'
-            )
+        self.login(self.user_a)
+        self.folder_a = self.create_folder(
+            container=self.folder,
+            title='folder-a'
+        )
+        self.doc_a = self.create_folder(
+            container=self.folder_a,
+            title='doc-a'
+        )
 
-        with self.user(self.user_b):
-            self.doc_b = self.create_folder(
-                container=self.folder_a,
-                title='doc-b'
-            )
+        self.login(self.user_b)
+        self.doc_b = self.create_folder(
+            container=self.folder_a,
+            title='doc-b'
+        )
 
     def test_userb_delete_docb(self):
         """

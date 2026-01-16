@@ -12,13 +12,13 @@ class TestFactoryPatch(FunctionalTestCase):
         transaction.commit()
 
         # Use plone.api to create content directly
-        with self.user(user):
-            folder = api.content.create(
-                container=self.layer['portal'],
-                type='Folder',
-                title='Foo'
-            )
-            transaction.commit()
-            # Verify the folder was created
-            self.assertIsNotNone(folder)
-            self.assertEqual(folder.Title(), 'Foo')
+        self.login(user)
+        folder = api.content.create(
+            container=self.layer['portal'],
+            type='Folder',
+            title='Foo'
+        )
+        transaction.commit()
+        # Verify the folder was created
+        self.assertIsNotNone(folder)
+        self.assertEqual(folder.Title(), 'Foo')

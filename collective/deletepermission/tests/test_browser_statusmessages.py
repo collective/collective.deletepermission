@@ -6,12 +6,12 @@ class TestBrowserStatusMessages(FunctionalTestCase):
 
     def setUp(self):
         self.user_a = self.create_user(userid='usera', roles=['Contributor'])
-        with self.user(self.user_a):
-            self.folder = self.create_folder(title='testfolder')
-            self.doc = self.create_folder(
-                container=self.folder,
-                title='testdoc'
-            )
+        self.login(self.user_a)
+        self.folder = self.create_folder(title='testfolder')
+        self.doc = self.create_folder(
+            container=self.folder,
+            title='testdoc'
+        )
 
     def test_delete_shows_status_message(self):
         """Test that deleting an object shows success message in rendered HTML."""
