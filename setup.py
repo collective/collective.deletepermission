@@ -1,9 +1,8 @@
-from setuptools import find_namespace_packages
 from setuptools import setup
 
 import os
 
-version = "1.5.1.dev0"
+version = "2.0.0a1"
 
 tests_require = [
     "AccessControl",
@@ -61,7 +60,11 @@ setup(
     author_email="mailto:m.leimgruber@webcloud7.ch",
     url="https://github.com/colletive/collective.deletepermission",
     license="GPL2",
-    packages=find_namespace_packages(exclude=["ez_setup", "*.profiles.*"]),
+    packages=[
+        "collective.deletepermission",
+        "collective.deletepermission.tests",
+        "collective.deletepermission.upgrades",
+    ],
     include_package_data=True,
     zip_safe=False,
     install_requires=[
@@ -79,7 +82,6 @@ setup(
         "zope.event",
         "zope.lifecycleevent",
     ],
-    tests_require=tests_require,
     extras_require=extras_require,
     entry_points="""
       # -*- Entry points: -*-
