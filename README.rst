@@ -101,7 +101,7 @@ Compatibility
 -------------
 
 - Plone 6.0 (version 2.x)
-- Python 3.12+
+- Python 3.11+
 
 For Plone 4.x and 5.x support, use version 1.x of this package.
 
