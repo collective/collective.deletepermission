@@ -8,7 +8,6 @@
     i18n_domain="collective.deletepermission">
 
   <include package="collective.monkeypatcher" />
-
   <include package=".upgrades" />
   <include file="permissions.zcml" />
 
