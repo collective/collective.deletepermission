@@ -5,25 +5,24 @@ class TestBrowserStatusMessages(FunctionalTestCase):
     """Test that status messages are properly captured from rendered HTML."""
 
     def setUp(self):
-        self.user_a = self.create_user(userid='usera', roles=['Contributor'])
+        self.user_a = self.create_user(userid="usera", roles=["Contributor"])
         self.login(self.user_a)
-        self.folder = self.create_folder(title='testfolder')
-        self.doc = self.create_folder(
-            container=self.folder,
-            title='testdoc'
-        )
+        self.folder = self.create_folder(title="testfolder")
+        self.doc = self.create_folder(container=self.folder, title="testdoc")
 
     def test_delete_shows_status_message(self):
         """Test that deleting an object shows success message in rendered HTML."""
         browser = self.get_browser()
-        browser.login(self.user_a).open(self.doc.absolute_url() + '/delete_confirmation')
+        browser.login(self.user_a).open(
+            self.doc.absolute_url() + "/delete_confirmation"
+        )
         browser.delete(self.doc)
 
         # After delete, we should have a success message
         # The exact message may vary, but there should be an info message
         messages = browser.get_status_messages()
         # At minimum, verify no error messages
-        self.assertEqual([], messages['error'])
+        self.assertEqual([], messages["error"])
 
     def test_copy_shows_status_message(self):
         """Test that copying shows status message."""
@@ -48,7 +47,7 @@ class TestBrowserStatusMessages(FunctionalTestCase):
         """Test successful rename shows no error messages."""
         browser = self.get_browser()
         browser.login(self.user_a).open(self.doc.absolute_url())
-        browser.rename(self.doc, 'renamed-doc')
+        browser.rename(self.doc, "renamed-doc")
 
         browser.assert_no_error_messages()
-        self.assertEqual(self.folder.absolute_url() + '/renamed-doc', browser.url)
+        self.assertEqual(self.folder.absolute_url() + "/renamed-doc", browser.url)

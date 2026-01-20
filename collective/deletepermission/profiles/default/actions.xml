@@ -1,33 +1,50 @@
-<?xml version="1.0"?>
-<object name="portal_actions" meta_type="Plone Actions Tool"
-   xmlns:i18n="http://xml.zope.org/namespaces/i18n">
+<?xml version="1.0" encoding="utf-8"?>
+<object xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+        meta_type="Plone Actions Tool"
+        name="portal_actions"
+>
 
-  <object name="object_buttons" meta_type="CMF Action Category">
-    <object name="cut" meta_type="CMF Action" i18n:domain="plone">
+  <object meta_type="CMF Action Category"
+          name="object_buttons"
+  >
+    <object meta_type="CMF Action"
+            name="cut"
+            i18n:domain="plone"
+    >
       <property name="available_expr">python:checkPermission("Delete objects", plone_context_state.parent()) and checkPermission("Copy or Move", object) and checkPermission("Delete portal content", object) and not plone_context_state.is_portal_root()</property>
       <property name="permissions">
-        <element value="Delete portal content"/>
-        <element value="Copy or Move"/>
+        <element value="Delete portal content" />
+        <element value="Copy or Move" />
       </property>
     </object>
 
-    <object name="rename" meta_type="CMF Action" i18n:domain="plone">
+    <object meta_type="CMF Action"
+            name="rename"
+            i18n:domain="plone"
+    >
       <property name="available_expr">python:checkPermission("Delete objects", plone_context_state.parent()) and checkPermission("Copy or Move", object) and checkPermission("Delete portal content", object) and checkPermission("Add portal content", object) and not plone_context_state.is_portal_root()</property>
       <property name="permissions">
-        <element value="Delete portal content"/>
-        <element value="Copy or Move"/>
+        <element value="Delete portal content" />
+        <element value="Copy or Move" />
       </property>
     </object>
 
-    <object name="delete" meta_type="CMF Action" i18n:domain="plone">
-      <property name="title" i18n:translate="">Delete</property>
-      <property name="description" i18n:translate=""></property>
+    <object meta_type="CMF Action"
+            name="delete"
+            i18n:domain="plone"
+    >
+      <property name="title"
+                i18n:translate=""
+      >Delete</property>
+      <property name="description"
+                i18n:translate=""
+      />
       <property name="url_expr">string:$object_url/delete_confirmation</property>
-      <property name="link_target"></property>
-      <property name="icon_expr"></property>
+      <property name="link_target" />
+      <property name="icon_expr" />
       <property name="available_expr">python:checkPermission("Delete objects", plone_context_state.parent())</property>
       <property name="permissions">
-        <element value="Delete portal content"/>
+        <element value="Delete portal content" />
       </property>
       <property name="visible">True</property>
     </object>

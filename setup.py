@@ -1,4 +1,6 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages
+from setuptools import setup
+
 import os
 
 version = "1.5.1.dev0"
@@ -54,10 +56,10 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     python_requires=">=3.11",
-    keywords="collective deletepermission 4teamwork ftw plone",
-    author="4teamwork AG",
-    author_email="mailto:info@4teamwork.ch",
-    url="https://github.com/4teamwork/collective.deletepermission",
+    keywords="collective deletepermission webcloud7 plone",
+    author="Mathias Leimgruber (webcloud7 ag)",
+    author_email="mailto:m.leimgruber@webcloud7.ch",
+    url="https://github.com/colletive/collective.deletepermission",
     license="GPL2",
     packages=find_packages(exclude=["ez_setup"]),
     namespace_packages=["collective"],

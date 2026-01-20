@@ -1,20 +1,24 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf-8"?>
 <rolemap>
-    <permissions>
+  <permissions>
 
-        <permission name="Delete portal content" acquire="True">
-            <role name="Site Administrator" />
-            <role name="Manager" />
-            <role name="Owner" />
-            <role name="Editor" />
-        </permission>
+    <permission acquire="True"
+                name="Delete portal content"
+    >
+      <role name="Site Administrator" />
+      <role name="Manager" />
+      <role name="Owner" />
+      <role name="Editor" />
+    </permission>
 
-        <permission name="Delete objects" acquire="True">
-            <role name="Contributor" />
-            <role name="Site Administrator" />
-            <role name="Manager" />
-            <role name="Editor" />
-        </permission>
+    <permission acquire="True"
+                name="Delete objects"
+    >
+      <role name="Contributor" />
+      <role name="Site Administrator" />
+      <role name="Manager" />
+      <role name="Editor" />
+    </permission>
 
-    </permissions>
+  </permissions>
 </rolemap>

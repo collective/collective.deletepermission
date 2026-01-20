@@ -9,13 +9,13 @@ from plone.app.testing import TEST_USER_NAME
 class TestCopy(FunctionalTestCase):
 
     def setUp(self):
-        self.portal = self.layer['portal']
-        setRoles(self.portal, TEST_USER_ID, ['Contributor'])
+        self.portal = self.layer["portal"]
+        setRoles(self.portal, TEST_USER_ID, ["Contributor"])
         login(self.portal, TEST_USER_NAME)
 
     def test_copy_works_without_being_able_to_delete(self):
         folder = self.create_folder()
-        self.revoke_permission('Delete portal content', on=folder)
+        self.revoke_permission("Delete portal content", on=folder)
         browser = self.get_browser()
         browser.login().open(folder.absolute_url())
         self.assertFalse(api.user.has_permission("Delete portal content", obj=folder))
@@ -27,7 +27,7 @@ class TestCopy(FunctionalTestCase):
 
     def test_copy_denied_without_copy_or_move_permission(self):
         folder = self.create_folder()
-        self.revoke_permission('Copy or Move', on=folder)
+        self.revoke_permission("Copy or Move", on=folder)
         browser = self.get_browser()
         browser.login().open(folder.absolute_url())
         self.assertFalse(api.user.has_permission("Copy or Move", obj=folder))

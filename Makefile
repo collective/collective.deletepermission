@@ -234,40 +234,40 @@ ${ZPRETTY_SENTINEL}: ${PREPARE_TARGET}
 .PHONY: apply-style-black
 apply-style-black: ${BLACK_SENTINEL}  ## apply/format code style black (to Python files)
 	@echo "$(OK_COLOR)Apply style black rules to code in ${ADDONFOLDER}/*$(NO_COLOR)"
-	@${PYBIN}black ${ADDONFOLDER}
+	@${PYBIN}black --exclude '/(\.?venv|\.git)/' ${ADDONFOLDER}
 
 .PHONY: apply-style-isort
 apply-style-isort: ${ISORT_SENTINEL} ## apply/format code style isort (sorted imports in Python files)
 	@echo "$(OK_COLOR)Apply style isort rules to code in ${ADDONFOLDER}/*$(NO_COLOR)"
-	@${PYBIN}isort ${ADDONFOLDER}
+	@${PYBIN}isort --skip venv --skip .venv ${ADDONFOLDER}
 
 .PHONY: apply-style-zpretty
 apply-style-zpretty: ${ZPRETTY_SENTINEL}   ## apply/format code style zpretty (to XML/ZCML files)
 	@echo "$(OK_COLOR)Apply style zpretty rules to code in ${ADDONFOLDER}/*$(NO_COLOR)"
-	@find ${ADDONFOLDER} -name '*.zcml' -exec ${PYBIN}zpretty -iz {} +
-	@find ${ADDONFOLDER} -name "*.xml"|grep -v locales|xargs ${PYBIN}zpretty -ix
+	@find ${ADDONFOLDER} -name '*.zcml' -not -path "*/.venv/*" -not -path "*/venv/*" -exec ${PYBIN}zpretty -iz {} +
+	@find ${ADDONFOLDER} -name "*.xml" -not -path "*/.venv/*" -not -path "*/venv/*" | grep -v locales | xargs ${PYBIN}zpretty -ix
 
 .PHONY: style ## apply code styles black, isort and zpretty
 style: apply-style-black apply-style-isort apply-style-zpretty
 
-.PHONY: format ## alias for "style"
-FORMATTING: style
+.PHONY: format
+format: style ## alias for "style"
 
 .PHONY: lint-black
 lint-black: ${BLACK_SENTINEL}  ## lint code-style black (to Python files)
 	@echo "$(OK_COLOR)Lint black rules to code in ${ADDONFOLDER}/*$(NO_COLOR)"
-	@${PYBIN}black --check ${ADDONFOLDER}
+	@${PYBIN}black --check --exclude '/(\.?venv|\.git)/' ${ADDONFOLDER}
 
 .PHONY: lint-isort
 lint-isort: ${ISORT_SENTINEL} ## lint code-style isort (sorted imports in Python files)
 	@echo "$(OK_COLOR)Apply style isort rules to code in ${ADDONFOLDER}/*$(NO_COLOR)"
-	@${PYBIN}isort --check-only ${ADDONFOLDER}
+	@${PYBIN}isort --check-only --skip venv --skip .venv ${ADDONFOLDER}
 
 .PHONY: lint-zpretty
 lint-zpretty: ${ZPRETTY_SENTINEL}   ## lint code-style zpretty (to XML/ZCML files)
 	@echo "$(OK_COLOR)Apply style zpretty rules to code in ${ADDONFOLDER}/*$(NO_COLOR)"
-	@find ${ADDONFOLDER} -name '*.zcml' -exec ${PYBIN}zpretty --check -z {} +
-	@find ${ADDONFOLDER} -name '*.xml'|grep -v locales|xargs zpretty --check -x
+	@find ${ADDONFOLDER} -name '*.zcml' -not -path "*/.venv/*" -not -path "*/venv/*" -exec ${PYBIN}zpretty --check -z {} +
+	@find ${ADDONFOLDER} -name '*.xml' -not -path "*/.venv/*" -not -path "*/venv/*" | grep -v locales | xargs ${PYBIN}zpretty --check -x
 
 .PHONY: lint ## lint all: check if complies with code-styles black, isort and zpretty
 lint: lint-black lint-isort lint-zpretty
