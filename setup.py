@@ -1,4 +1,4 @@
-from setuptools import find_packages
+from setuptools import find_namespace_packages
 from setuptools import setup
 
 import os
@@ -61,8 +61,7 @@ setup(
     author_email="mailto:m.leimgruber@webcloud7.ch",
     url="https://github.com/colletive/collective.deletepermission",
     license="GPL2",
-    packages=find_packages(exclude=["ez_setup"]),
-    namespace_packages=["collective"],
+    packages=find_namespace_packages(exclude=["ez_setup", "*.profiles.*"]),
     include_package_data=True,
     zip_safe=False,
     install_requires=[
