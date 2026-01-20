@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rolemap>
+  <permissions>
+    <!-- Reset Delete objects to Plone defaults -->
+    <permission acquire="True"
+                name="Delete objects"
+    >
+      <role name="Manager" />
+      <role name="Site Administrator" />
+      <role name="Owner" />
+      <role name="Editor" />
+    </permission>
+
+    <!-- Remove all role mappings for Delete portal content (defined by this package) -->
+    <permission acquire="True"
+                name="Delete portal content"
+    />
+  </permissions>
+</rolemap>

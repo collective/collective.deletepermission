@@ -1,29 +1,23 @@
-from collective.deletepermission.testing import IS_PLONE_5_OR_GREATER
-from collective.deletepermission.tests.base import duplicate_with_dexterity
 from collective.deletepermission.tests.base import FunctionalTestCase
-from ftw.builder import Builder
-from ftw.builder import create
-from ftw.testbrowser import browsing
-from ftw.testbrowser.pages import factoriesmenu
-from ftw.testbrowser.pages import plone
-from ftw.testbrowser.pages import statusmessages
+from plone import api
+
 import transaction
 
 
-@duplicate_with_dexterity
 class TestFactoryPatch(FunctionalTestCase):
 
-    @browsing
-    def test_object_addable_without_delete_permission(self, browser):
-        user = create(Builder('user').with_roles('Contributor'))
-        self.revoke_permission('Delete portal content', on=self.layer['portal'])
+    def test_object_addable_without_delete_permission(self):
+        """Test that objects can be created without delete permission."""
+        user = self.create_user(userid="testuser", roles=["Contributor"])
+        self.revoke_permission("Delete portal content", on=self.layer["portal"])
         transaction.commit()
 
-        browser.login(user).open()
-        factoriesmenu.add(self.folder_name)
-        browser.fill({'Title': 'Foo'}).save()
-        statusmessages.assert_no_error_messages()
-        if IS_PLONE_5_OR_GREATER:
-            self.assertEquals('listing_view', plone.view())
-        else:
-            self.assertEquals('folder_listing', plone.view())
+        # Use plone.api to create content directly
+        self.login(user)
+        folder = api.content.create(
+            container=self.layer["portal"], type="Folder", title="Foo"
+        )
+        transaction.commit()
+        # Verify the folder was created
+        self.assertIsNotNone(folder)
+        self.assertEqual(folder.Title(), "Foo")

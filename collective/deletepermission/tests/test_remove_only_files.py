@@ -1,45 +1,45 @@
-from collective.deletepermission.tests.base import duplicate_with_dexterity
 from collective.deletepermission.tests.base import FunctionalTestCase
-from ftw.builder import Builder
-from ftw.builder import create
-from ftw.testbrowser import browsing
 
 
-@duplicate_with_dexterity
 class TestOnlyFiles(FunctionalTestCase):
 
     def setUp(self):
-        self.user_a = create(Builder('user').with_userid('usera'))
+        self.user_a = self.create_user(userid="usera")
 
-        self.folder = create(self.folder_builder().titled(u'rootfolder'))
-        self.set_local_roles(self.folder, self.user_a, 'Contributor')
+        self.folder = self.create_folder(title="rootfolder")
+        self.set_local_roles(self.folder, self.user_a, "Contributor")
 
-        self.subfolder = create(self.folder_builder().titled(u'subfolder')
-                                .within(self.folder))
+        self.subfolder = self.create_folder(container=self.folder, title="subfolder")
 
-        with self.user(self.user_a):
-            self.firstleveldoc = create(self.folder_builder()
-                                        .titled(u'doc-firstleveldoc')
-                                        .within(self.folder))
-            self.secondleveldoc = create(self.folder_builder()
-                                         .titled(u'doc-secondleveldoc')
-                                         .within(self.subfolder))
+        self.login(self.user_a)
+        self.firstleveldoc = self.create_folder(
+            container=self.folder, title="doc-firstleveldoc"
+        )
+        self.secondleveldoc = self.create_folder(
+            container=self.subfolder, title="doc-secondleveldoc"
+        )
 
-    @browsing
-    def test_delete_secondlevel(self, browser):
+    def test_delete_secondlevel(self):
         """Test if we are able to delete the file in the subfolder"""
-        browser.login(self.user_a).open(self.secondleveldoc, view='delete_confirmation')
-        browser.find('Delete').click()
+        browser = self.get_browser()
+        browser.login(self.user_a).open(
+            self.secondleveldoc.absolute_url() + "/delete_confirmation"
+        )
+        browser.delete(self.secondleveldoc)
 
-    @browsing
-    def test_delete_firstlevel(self, browser):
+    def test_delete_firstlevel(self):
         """Test if we are able to delete the file in the rootfolder"""
-        browser.login(self.user_a).open(self.firstleveldoc, view='delete_confirmation')
-        browser.find('Delete').click()
+        browser = self.get_browser()
+        browser.login(self.user_a).open(
+            self.firstleveldoc.absolute_url() + "/delete_confirmation"
+        )
+        browser.delete(self.firstleveldoc)
 
-    @browsing
-    def test_delete_subfolder(self, browser):
+    def test_delete_subfolder(self):
         """Test if we can delete the subfolder. This should not be the case."""
-        browser.login(self.user_a).open(self.subfolder, view='delete_confirmation')
+        browser = self.get_browser()
+        browser.login(self.user_a).open(
+            self.subfolder.absolute_url() + "/delete_confirmation"
+        )
         with browser.expect_unauthorized():
-            browser.find('Delete').click()
+            browser.delete(self.subfolder)

@@ -10,7 +10,7 @@ from AccessControl.Permissions import copy_or_move
 # check the permission and no longer use cb_userHasCopyOrMovePermission.
 def cb_isCopyable(self):
     # Is object copyable? Returns 0 or 1
-    if not (hasattr(self, '_canCopy') and self._canCopy(0)):
+    if not (hasattr(self, "_canCopy") and self._canCopy(0)):
         return 0
     # if not self.cb_userHasCopyOrMovePermission():
     if not getSecurityManager().checkPermission(copy_or_move, self):
