@@ -1,8 +1,8 @@
 Changelog
 =========
 
-2.0.0 (unreleased)
-------------------
+2.0.0a1 (2026-01-20)
+--------------------
 
 - Complete rewrite for Plone 6 [maethu]
 
