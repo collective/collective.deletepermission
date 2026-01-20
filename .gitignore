@@ -2,6 +2,7 @@
 .make-sentinels
 instance/
 venv/
+dist/
 sources/
 requirements-mxdev.txt
 constraints-mxdev.txt

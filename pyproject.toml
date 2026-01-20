@@ -1,3 +1,80 @@
+[build-system]
+requires = ["setuptools>=68.2,<80", "wheel"]
+
+[project]
+name = "collective.deletepermission"
+version = "2.0.0a1"
+description = "Implements a new permission 'Delete portal content'"
+keywords = ["collective", "deletepermission", "webcloud7", "plone"]
+license = "GPL-2.0-only"
+authors = [
+    {name = "Mathias Leimgruber (webcloud7 ag)", email = "m.leimgruber@webcloud7.ch"},
+]
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Framework :: Plone",
+    "Framework :: Plone :: 6.1",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "AccessControl",
+    "Acquisition",
+    "Products.CMFCore",
+    "Products.CMFPlone",
+    "Products.GenericSetup",
+    "Products.PythonScripts",
+    "ZODB",
+    "Zope",
+    "collective.monkeypatcher",
+    "setuptools",
+    "zope.container",
+    "zope.event",
+    "zope.lifecycleevent",
+]
+dynamic = ["readme"]
+
+[project.urls]
+Homepage = "https://github.com/collective/collective.deletepermission"
+Repository = "https://github.com/collective/collective.deletepermission"
+Issues = "https://github.com/collective/collective.deletepermission/issues"
+
+[project.optional-dependencies]
+test = [
+    "AccessControl",
+    "Products.CMFCore",
+    "Products.GenericSetup",
+    "Products.statusmessages",
+    "Zope",
+    "beautifulsoup4",
+    "plone.api>=1.3.0",
+    "plone.app.contenttypes",
+    "plone.app.dexterity",
+    "plone.app.portlets",
+    "plone.app.testing",
+    "plone.autoform",
+    "requests",
+    "transaction",
+    "zExceptions",
+    "zope.interface",
+]
+
+[project.entry-points."z3c.autoinclude.plugin"]
+target = "plone"
+
+[tool.setuptools]
+zip-safe = false
+include-package-data = true
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.rst", "docs/HISTORY.txt"], content-type = "text/x-rst"}
+
 [tool.black]
 line-length = 88
 target-version = ["py311"]

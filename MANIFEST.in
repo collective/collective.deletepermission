@@ -2,6 +2,14 @@ recursive-include collective *
 recursive-include docs *
 include *.txt
 include *.rst
+include pyproject.toml
 global-exclude *.pyc
 global-exclude ._*
 global-exclude *.mo
+global-exclude __pycache__
+prune instance
+prune venv
+prune .venv
+prune .git
+prune .make-sentinels
+prune .mxdev_cache
