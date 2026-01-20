@@ -3,7 +3,7 @@ requires = ["setuptools>=68.2,<80", "wheel"]
 
 [project]
 name = "collective.deletepermission"
-version = "2.0.0a3"
+version = "2.0.0a4.dev0"
 description = "Implements a new permission 'Delete portal content'"
 keywords = ["collective", "deletepermission", "webcloud7", "plone"]
 license = "GPL-2.0-only"
