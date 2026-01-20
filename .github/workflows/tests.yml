@@ -34,11 +34,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install mxdev
-          mxdev -c sources.ini
-          pip install -r requirements-mxdev.txt
+          make install
 
       - name: Run tests
         run: |
-          zope-testrunner --test-path=. -s collective.deletepermission
+          make test
