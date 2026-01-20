@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<object xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+        meta_type="Plone Actions Tool"
+        name="portal_actions"
+>
+  <!-- Reset actions to Plone defaults -->
+
+  <object meta_type="CMF Action Category"
+          name="object_buttons"
+  >
+    <object meta_type="CMF Action"
+            name="cut"
+            i18n:domain="plone"
+    >
+      <property name="available_expr">python:checkPermission("Delete objects", plone_context_state.parent()) and checkPermission("Copy or Move", object) and not plone_context_state.is_portal_root()</property>
+      <property name="permissions">
+        <element value="Delete objects" />
+      </property>
+    </object>
+
+    <object meta_type="CMF Action"
+            name="rename"
+            i18n:domain="plone"
+    >
+      <property name="available_expr">python:checkPermission("Delete objects", plone_context_state.parent()) and checkPermission("Copy or Move", object) and checkPermission("Add portal content", object) and not plone_context_state.is_portal_root()</property>
+      <property name="permissions">
+        <element value="Add portal content" />
+      </property>
+    </object>
+
+    <object meta_type="CMF Action"
+            name="delete"
+            i18n:domain="plone"
+    >
+      <property name="available_expr">python:checkPermission("Delete objects", plone_context_state.parent()) and not plone_context_state.is_portal_root()</property>
+      <property name="permissions">
+        <element value="Delete objects" />
+      </property>
+    </object>
+  </object>
+</object>

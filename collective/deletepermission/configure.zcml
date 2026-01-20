@@ -64,4 +64,12 @@
       directory="profiles/default"
       />
 
+  <genericsetup:registerProfile
+      name="uninstall"
+      title="collective.deletepermission: uninstall"
+      description="Uninstall profile for collective.deletepermission"
+      provides="Products.GenericSetup.interfaces.EXTENSION"
+      directory="profiles/uninstall"
+      />
+
 </configure>
